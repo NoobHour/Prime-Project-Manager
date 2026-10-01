@@ -1,6 +1,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
+const { sourceBytes } = require('./source-bytes.cjs');
 /** Accepts a repository root; checks its source manifest and rejects private artifacts or recognizable secrets. Returns checked source count. */
 function checkPublic(root) {
   root = path.resolve(root);
@@ -74,7 +75,7 @@ function checkPublic(root) {
       throw new Error('Manifest path escaped root');
     const digest = crypto
       .createHash('sha256')
-      .update(fs.readFileSync(target))
+      .update(sourceBytes(target))
       .digest('hex');
     if (digest !== entry.sha256)
       throw new Error('Source changed since review: ' + entry.path);

@@ -1,6 +1,6 @@
 # Prime Project Manager (PPM)
 
-A local project manager for small teams. Keep customers, jobs, deadlines, checklists, appointments, files and team conversations in one dark-themed workspace.
+A local project manager for individual teams. Keep customers, jobs, deadlines, checklists, appointments, files and team conversations in one dark-themed workspace.
 
 Built with Angular, NestJS and SQLite through TypeORM/sql.js. The frontend and API run together in a single Node.js process; no separate database service is needed.
 
@@ -178,7 +178,7 @@ pnpm prepare:public -- ../ppm-source
 
 ```
 
-The destination must not exist. This creates an allowlisted source export and a SHA-256 manifest, excluding local data, historical assets, build output and backups. Within the export, run `node tools/check-public.cjs` to check the manifest and known private-file/credential patterns. This check is not a comprehensive secret audit. Regenerate the export after source changes; it does not create a Git remote or publish anything.
+The destination must not exist. This creates an allowlisted source export and a SHA-256 manifest, excluding local data, historical assets, build output and backups. Within the export, run `node tools/check-public.cjs` to check the manifest and known private-file/credential patterns. Source hashes normalize text CRLF line endings to LF; `.gitattributes` keeps Git checkouts consistent across platforms. Content edits still require a freshly reviewed manifest. Keep this README and `docs/PUBLIC-README.md` aligned when changing the public description. This check is not a comprehensive secret audit. Regenerate the export after source changes; it does not create a Git remote or publish anything.
 
 ## Project status
 

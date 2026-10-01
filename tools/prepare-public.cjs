@@ -2,6 +2,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const ts = require('typescript');
 const crypto = require('node:crypto');
+const { sourceBytes } = require('./source-bytes.cjs');
 const root = path.resolve(__dirname, '..');
 const destination = path.resolve(
   process.argv[2] || path.join(root, '..', 'publish', 'ppm-source'),
@@ -86,6 +87,7 @@ for (const file of [
   'pnpm-lock.yaml',
   'pnpm-workspace.yaml',
   '.prettierrc',
+  '.gitattributes',
   '.env.example',
   'Dockerfile',
   '.dockerignore',
@@ -101,6 +103,7 @@ for (const file of [
   'SECURITY.md',
   'THIRD_PARTY_NOTICES.md',
   'tools/check-public.cjs',
+  'tools/source-bytes.cjs',
   'tools/build.cjs',
   'tools/start.cjs',
   'tools/demo.cjs',
@@ -126,7 +129,7 @@ for (const relative of selected) {
 fs.mkdirSync(destination, { recursive: true });
 const manifest = [];
 for (const relative of [...selected].sort()) {
-  const bytes = fs.readFileSync(path.join(root, relative));
+  const bytes = sourceBytes(path.join(root, relative));
   const target = path.join(destination, relative);
   fs.mkdirSync(path.dirname(target), { recursive: true });
   fs.writeFileSync(target, bytes);
@@ -135,13 +138,13 @@ for (const relative of [...selected].sort()) {
     sha256: crypto.createHash('sha256').update(bytes).digest('hex'),
   });
 }
-fs.copyFileSync(
-  path.join(root, 'docs/PUBLIC-README.md'),
+fs.writeFileSync(
   path.join(destination, 'README.md'),
+  sourceBytes(path.join(root, 'docs/PUBLIC-README.md')),
 );
-fs.copyFileSync(
-  path.join(root, 'docs/PUBLIC-GITIGNORE'),
+fs.writeFileSync(
   path.join(destination, '.gitignore'),
+  sourceBytes(path.join(root, 'docs/PUBLIC-GITIGNORE')),
 );
 // Include the rendered entry documents in the same review manifest as their source templates.
 for (const name of ['README.md', '.gitignore']) {

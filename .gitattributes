@@ -1,0 +1,2 @@
+# Text stays LF in Git and working checkouts, including on Windows.
+* text=auto eol=lf
