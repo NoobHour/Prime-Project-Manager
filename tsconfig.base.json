@@ -1,0 +1,70 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "rootDir": ".",
+    "sourceMap": true,
+    "declaration": false,
+    "moduleResolution": "bundler",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "importHelpers": true,
+    "target": "ES2022",
+    "module": "ES2022",
+    "lib": ["ES2022", "dom"],
+    "skipLibCheck": true,
+    "skipDefaultLibCheck": true,
+    "baseUrl": ".",
+    "paths": {
+      "@mgmt/shared/api/core": ["libs/shared/api/core/src/index.ts"],
+      "@mgmt/shared/api/constants": ["libs/shared/api/constants/src/index.ts"],
+      "@mgmt/shared/api/error-handler": [
+        "libs/shared/api/error-handler/src/index.ts"
+      ],
+      "@mgmt/shared/api/foundation": [
+        "libs/shared/api/foundation/src/index.ts"
+      ],
+      "@mgmt/shared/api/config": ["libs/shared/api/config/src/index.ts"],
+      "@mgmt/shared/api/validations": [
+        "libs/shared/api/validations/src/index.ts"
+      ],
+      "@mgmt/shared/client-server": ["libs/shared/client-server/src/index.ts"],
+      "@mgmt/shared/constants": ["libs/shared/constants/src/index.ts"],
+      "@mgmt/shared/common": ["libs/shared/common/src/index.ts"],
+      "@mgmt/shared/configuration": ["libs/shared/configuration/src/index.ts"],
+      "@mgmt/shared/directives": ["libs/shared/directives/src/index.ts"],
+      "@mgmt/shared/error-handler": ["libs/shared/error-handler/src/index.ts"],
+      "@mgmt/shared/foundation": ["libs/shared/foundation/src/index.ts"],
+      "@mgmt/shared/interceptors": ["libs/shared/interceptors/src/index.ts"],
+      "@mgmt/shared/loading": ["libs/shared/loading/src/index.ts"],
+      "@mgmt/shared/logging": ["libs/shared/logging/src/index.ts"],
+      "@mgmt/shared/notification": ["libs/shared/notification/src/index.ts"],
+      "@mgmt/shared/spinner": ["libs/shared/spinner/src/index.ts"],
+      "@mgmt/shared/storage": ["libs/shared/storage/src/index.ts"],
+      "@mgmt/shared/toaster": ["libs/shared/toaster/src/index.ts"],
+      "@mgmt/shared/core": ["libs/shared/core/src/index.ts"],
+      "@mgmt/shared/string-util": ["libs/shared/string-util/src/index.ts"],
+      "@mgmt/user/api/shared": ["libs/user/api/shared/src/index.ts"],
+      "@mgmt/user/api/handlers": ["libs/user/api/handlers/src/index.ts"],
+      "@mgmt/user/api-interfaces": ["libs/user/api-interfaces/src/index.ts"],
+      "@mgmt/user/feature": ["libs/user/feature/src/index.ts"],
+      "@mgmt/user/shared": ["libs/user/shared/src/index.ts"],
+      "@mgmt/customer/api/shared": ["libs/customer/api/shared/src/index.ts"],
+      "@mgmt/customer/api/handlers": [
+        "libs/customer/api/handlers/src/index.ts"
+      ],
+      "@mgmt/customer/api-interfaces": [
+        "libs/customer/api-interfaces/src/index.ts"
+      ],
+      "@mgmt/customer/shared": ["libs/customer/shared/src/index.ts"],
+      "@mgmt/customer/feature": ["libs/customer/feature/src/index.ts"],
+      "@mgmt/customer/feature/src/lib/file-util": [
+        "libs/customer/feature/src/lib/file-util/src/index.ts"
+      ],
+      "@mgmt/shared/api/config/*": ["libs/shared/api/config/*"],
+      "@mgmt/shared/api/validations/*": ["libs/shared/api/validations/*"]
+    },
+    "useDefineForClassFields": false,
+    "strict": false
+  },
+  "exclude": ["node_modules", "tmp"]
+}

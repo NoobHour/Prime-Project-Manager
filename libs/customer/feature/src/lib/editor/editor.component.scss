@@ -1,0 +1,7 @@
+/* Fieldsets freeze only the saving job; sibling drafts remain editable. */
+fieldset {
+  min-width: 0;
+  border: 0;
+  padding: 0;
+  margin: 0;
+}

@@ -1,0 +1,56 @@
+/* Contact details and assigned-work navigation have separate rows, even with long addresses. */
+:host {
+  display: block;
+}
+.team-page {
+  padding: 0 1.25rem 1.5rem;
+  text-align: left;
+}
+.team-page h2 {
+  font-size: 1.8rem;
+  margin: 0 0 0.4rem;
+}
+.team-page header p {
+  color: #b4c1cf;
+  margin-bottom: 1.5rem;
+}
+.team-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 270px), 1fr));
+  gap: 1rem;
+}
+.team-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 1.5rem;
+}
+.team-card h3 {
+  font-size: 1.35rem;
+  margin: 0 0 0.4rem;
+  overflow-wrap: anywhere;
+}
+.member-title {
+  color: #b4c1cf;
+  margin-bottom: 1.1rem;
+}
+.member-contact {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-bottom: 1.25rem;
+  overflow-wrap: anywhere;
+}
+.assigned-jobs {
+  align-self: flex-start;
+  margin-top: auto;
+  white-space: nowrap;
+}
+@media (max-width: 700px) {
+  .team-page {
+    padding: 0 0.75rem 1rem;
+  }
+  .team-card {
+    padding: 1.1rem;
+  }
+}

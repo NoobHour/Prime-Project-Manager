@@ -1,0 +1,65 @@
+{
+  "version": 1,
+  "newProjectRoot": "apps",
+  "projects": {
+    "mgmtapp": {
+      "projectType": "application",
+      "root": "apps/mgmtapp",
+      "sourceRoot": "apps/mgmtapp/src",
+      "architect": {
+        "build": {
+          "builder": "@angular/build:application",
+          "options": {
+            "outputPath": "dist/apps/mgmtapp",
+            "index": "apps/mgmtapp/src/index.html",
+            "browser": "apps/mgmtapp/src/main.ts",
+            "polyfills": ["zone.js", "@angular/localize/init"],
+            "tsConfig": "apps/mgmtapp/tsconfig.app.json",
+            "assets": [
+              {
+                "glob": "LICENSE",
+                "input": ".",
+                "output": "assets"
+              },
+              {
+                "glob": "THIRD_PARTY_NOTICES.md",
+                "input": ".",
+                "output": "assets"
+              },
+              {
+                "glob": "workspace-mark.svg",
+                "input": "apps/mgmtapp/src/assets",
+                "output": "assets"
+              }
+            ],
+            "styles": [
+              "node_modules/quill/dist/quill.snow.css",
+              "node_modules/angular-calendar/css/angular-calendar.css",
+              "apps/mgmtapp/src/styles.scss",
+              "node_modules/primeflex/primeflex.css",
+              "node_modules/primeicons/primeicons.css",
+              "apps/mgmtapp/src/assets/theme.css"
+            ],
+            "allowedCommonJsDependencies": ["quill", "date-fns"],
+            "optimization": {
+              "styles": {
+                "minify": true,
+                "inlineCritical": false
+              },
+              "fonts": false,
+              "scripts": true
+            },
+            "sourceMap": false
+          }
+        },
+        "serve": {
+          "builder": "@angular/build:dev-server",
+          "options": {
+            "buildTarget": "mgmtapp:build",
+            "proxyConfig": "proxy.conf.json"
+          }
+        }
+      }
+    }
+  }
+}

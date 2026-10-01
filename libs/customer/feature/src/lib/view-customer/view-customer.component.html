@@ -1,0 +1,180 @@
+<div class="leave-backdrop" *ngIf="leavePrompt"><section class="leave-dialog" role="alertdialog" aria-modal="true" aria-labelledby="customer-leave-heading" cdkTrapFocus [cdkTrapFocusAutoCapture]="true" (keydown.escape)="resolveLeave(false)"><h2 id="customer-leave-heading">Unsent messages</h2><p>Send your messages before leaving, or discard the drafts for these boards.</p><div class="leave-actions"><button type="button" class="btn btn-primary" cdkFocusInitial (click)="resolveLeave(false)">Keep writing</button><button type="button" class="btn btn-outline-danger" (click)="resolveLeave(true)">Discard drafts</button></div></section></div>
+<div [inert]="leavePrompt">
+<p *ngIf="error" role="alert">{{ error }}</p>
+<div style="padding: 1rem; padding-top: 2rem; margin: 0px; width: 100%">
+  <div class="p-grid">
+    <div class="p-col-12">
+      <div class="p-grid">
+        <div class="p-col-12 p-lg-4">
+          <div
+            class="prime-naked-card"
+            style="
+              width: fit-content;
+              padding: 1rem;
+              margin-top: 0.5rem;
+              padding-bottom: 0rem;
+            "
+          >
+            <div class="p-grid">
+              <div class="p-col-12 p-text-lg-left p-text-center">
+                <div *ngIf="customer?.avatar" style="display: inline-block">
+                  <img
+                    [src]="customer?.avatar"
+                    style="
+                      width: 6rem;
+                      height: 6rem;
+                      object-fit: cover;
+                      border-radius: 1rem;
+                      max-width: 150px;
+                      max-height: 150px;
+                    "
+                  />
+                </div>
+                <div *ngIf="!customer?.avatar" style="display: inline-block">
+                  <i class="pi pi-user" style="font-size: 3rem"></i>
+                </div>
+                <div
+                  style="
+                    display: inline-block;
+                    padding-left: 1rem;
+                    padding-right: 1rem;
+                  "
+                >
+                  <h4>{{ customer?.name }}</h4>
+                </div>
+                <div></div>
+              </div>
+
+              <div class="p-col-12 p-text-left">
+                <div
+                  style="
+                    border-style: solid;
+                    border-width: 0px;
+                    border-color: #8dd0ff;
+                    border-top-width: 2px;
+                    margin-top: -15px;
+                    margin-bottom: 15px;
+                  "
+                ></div>
+                <p-divider align="left">
+                  <h6 style="color: #8dd0ff">Phone</h6>
+                </p-divider>
+
+                <div
+                  style="
+                    margin-left: 1rem;
+                    margin-top: -0.5rem;
+                    margin-bottom: 0.5rem;
+                  "
+                >
+                  {{ customer?.phone }}
+                </div>
+
+                <p-divider align="left">
+                  <h6 style="color: #8dd0ff">Address</h6>
+                </p-divider>
+                <div
+                  style="
+                    margin-left: 1rem;
+                    margin-top: -0.5rem;
+                    margin-bottom: 0.5rem;
+                  "
+                >
+                  {{ customer?.address }}
+                </div>
+
+                <p-divider align="left">
+                  <h6 style="color: #8dd0ff">Email</h6>
+                </p-divider>
+                <div
+                  style="
+                    margin-left: 1rem;
+                    margin-top: -0.5rem;
+                    margin-bottom: 0.5rem;
+                  "
+                >
+                  {{ customer?.email }}
+                </div>
+
+                <p-divider align="left">
+                  <h6 style="color: #8dd0ff">Jobs</h6>
+                </p-divider>
+                <div
+                  style="
+                    margin-left: 1rem;
+                    margin-top: -0.5rem;
+                    margin-bottom: 0.5rem;
+                  "
+                >
+                  <div *ngFor="let t of jobsList" class="customer-job-link">
+                    <a [routerLink]="['/job', t.jobSlug]">{{ t.name }}</a>
+                    <small>{{ t.isArchived ? 'Archived' : t.isComplete ? 'Completed' : t.isActive ? 'Active' : 'Planned' }}</small>
+                  </div>
+                </div>
+
+                <div class="customer-info">
+                  <p-divider align="left">
+                    <h6 style="color: #8dd0ff">Customer Info</h6>
+                  </p-divider>
+                  <div *ngIf="customer?.body" [innerHTML]="customer.body"></div>
+                </div>
+              </div>
+
+              <div class="p-col-12">
+                <div class="customer-actions">
+                  <mgmt-customer-author
+                    [customer]="customer"
+                    [currentUser]="userService?.userInfo"
+                    (toggleArchived)="delete()"
+                  >
+                  </mgmt-customer-author>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="p-col-12 p-lg-8">
+          <h3>Customer discussions</h3><p>One feed for this customer's general and job boards.</p><view-comments #customerDiscussion *ngIf="customer" [slug]="customer.slug" [combined]="true" [jobs]="jobsList"></view-comments>
+        </div>
+      </div>
+
+      <p-tabView>
+        <p-tabPanel header="Details"
+          ><div class="prime-naked-card p-3">
+            <h5>Jobs</h5>
+            <div *ngFor="let job of jobsList" class="mb-3">
+              <strong>{{ job.name }}</strong
+              ><span class="ml-2">{{
+                job.isArchived
+                  ? 'Archived'
+                  : job.isComplete
+                    ? 'Completed'
+                    : job.isActive
+                      ? 'Active'
+                      : 'Planned'
+              }}</span>
+              <div [innerHTML]="$any(job).body"></div>
+            </div>
+            <a
+              class="btn btn-outline-primary"
+              [routerLink]="['/editor', customer?.slug]"
+              >Edit customer & jobs</a
+            >
+          </div></p-tabPanel
+        >
+        <p-tabPanel header="Calendar"
+          ><customercalendar [jobs]="jobsList"></customercalendar
+        ></p-tabPanel>
+        <p-tabPanel header="Files"
+          ><mgmt-file-util
+            [customer]="customer"
+            [jobs]="jobsList"
+            (changed)="loadCustomer(customer.slug)"
+          ></mgmt-file-util
+        ></p-tabPanel>
+      </p-tabView>
+    </div>
+  </div>
+</div>
+
+</div>

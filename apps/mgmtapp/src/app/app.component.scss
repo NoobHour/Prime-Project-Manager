@@ -1,0 +1,30 @@
+/* Keep attribution after the page content, including on short sign-in screens. */
+:host { display: block; }
+.app-shell { display: flex; flex-direction: column; min-height: 100vh; }
+.app-content { flex: 1; min-width: 0; }
+.app-footer {
+  margin-top: 2rem;
+  padding: 1.25rem clamp(1rem, 4vw, 3rem);
+  border-top: 1px solid #3d4a59;
+  background: #20262e;
+  color: #b9c5d3;
+  font-size: 0.875rem;
+}
+.footer-credit, .footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1.25rem;
+}
+.footer-links { margin-top: 0.5rem; }
+.app-footer a { color: #a6d9ff; text-decoration: underline; text-underline-offset: 0.2em; }
+.app-footer a:hover { color: #fff; }
+.app-footer a:focus-visible, .footer-about summary:focus-visible {
+  outline: 2px solid #a6d9ff;
+  outline-offset: 4px;
+}
+/* The expandable legal information stays in normal flow at every screen width. */
+.footer-about { margin-top: 0.75rem; max-width: 65rem; }
+.footer-about summary { cursor: pointer; width: fit-content; color: #a6d9ff; }
+.about-content { padding-top: 0.75rem; line-height: 1.6; }
+.about-content p { margin-bottom: 0.75rem; }

@@ -1,0 +1,190 @@
+<section class="work-board">
+  <header class="board-heading">
+    <div>
+      <span class="eyebrow">PROJECT WORK</span>
+      <h2>{{complete ? 'Completed jobs' : 'Job Board'}}</h2>
+      <p>Scan priorities. Find a job. Keep work moving.</p>
+    </div>
+    <a class="btn btn-outline-primary" routerLink="/editor">+ New customer</a>
+  </header>
+  <div class="filters">
+    <label class="search"
+      >Search jobs or customers<input
+        class="form-control"
+        type="search"
+        name="search"
+        [(ngModel)]="search"
+        (ngModelChange)="filterChanged(true)"
+        placeholder="Start typing to filter…"
+        maxlength="200"
+    /></label>
+    <label
+      >Owner<select
+        class="form-control"
+        [(ngModel)]="assignee"
+        (ngModelChange)="filterChanged()"
+      >
+        <option value="">Everyone</option>
+        <option *ngFor="let member of team" [value]="member.id">
+          {{member.username}}
+        </option>
+      </select></label
+    >
+    <label
+      >Priority<select
+        class="form-control"
+        [(ngModel)]="priority"
+        (ngModelChange)="filterChanged()"
+      >
+        <option value="">All priorities</option>
+        <option value="urgent">Urgent</option>
+        <option value="high">High</option>
+        <option value="normal">Normal</option>
+        <option value="low">Low</option>
+      </select></label
+    >
+    <label *ngIf="!complete"
+      >Status<select
+        class="form-control"
+        [(ngModel)]="lane"
+        (ngModelChange)="filterChanged()"
+      >
+        <option value="">All open</option>
+        <option value="planned">Planned</option>
+        <option value="active">Active</option>
+      </select></label
+    >
+  </div>
+  <div class="filter-bar">
+    <div class="quick-filters">
+      <button
+        class="filter-chip"
+        [class.selected]="onlyMine"
+        [attr.aria-pressed]="onlyMine"
+        (click)="mine()"
+      >
+        My jobs</button
+      ><button
+        *ngIf="!complete"
+        class="filter-chip"
+        [class.selected]="overdue"
+        [attr.aria-pressed]="overdue"
+        (click)="overdue=!overdue;filterChanged()"
+      >
+        Overdue</button
+      ><button
+        *ngIf="!complete"
+        class="filter-chip"
+        [class.selected]="attention"
+        [attr.aria-pressed]="attention"
+        (click)="attention=!attention;filterChanged()"
+      >
+        Needs attention</button
+      ><button class="clear-filters" (click)="clear()">Clear filters</button>
+    </div>
+    <span role="status"
+      >{{loading ? 'Searching…' : total + (total===1?' job':' jobs')}}</span
+    >
+  </div>
+  <p class="text-danger" role="alert" *ngIf="error">
+    {{error}}
+    <button class="btn btn-outline-primary" (click)="load()">Retry</button>
+  </p>
+  <div class="job-list" [attr.aria-busy]="loading">
+    <div class="job-row column-head" aria-hidden="true">
+      <span>Job / customer</span><span>Owner</span><span>Priority</span
+      ><span>Due</span><span>Checklist</span><span>Status</span><span></span>
+    </div>
+    <article *ngFor="let job of jobs;trackBy:trackJob" class="job-record">
+      <div class="job-row">
+        <div class="job-title">
+          <a [routerLink]="['/job',job.jobSlug]">{{job.name}}</a
+          ><a
+            class="customer-link"
+            [routerLink]="['/customer',job.customerSlug]"
+            >{{job.customerName}}</a
+          >
+        </div>
+        <span class="owner">{{owner(job.assigneeId)}}</span>
+        <span class="priority" [attr.data-priority]="job.priority"
+          >{{job.priority|titlecase}}</span
+        >
+        <span class="deadline" [class.overdue]="isOverdue(job)"
+          >{{job.dueDate ? (job.dueDate|date:'MMM d':'UTC') : 'No date'}}<small
+            *ngIf="isOverdue(job)"
+            >Overdue</small
+          ></span
+        >
+        <span
+          class="progress-count"
+          [attr.aria-label]="done(job)+' of '+(job.taskList?.length||0)+' checklist items complete'"
+          >{{job.taskList?.length ? done(job)+' / '+job.taskList.length :
+          '—'}}</span
+        >
+        <select
+          class="form-control status-select"
+          [attr.aria-label]="'Status for '+job.name+' at '+job.customerName"
+          #status
+          [value]="job.lane"
+          (change)="move(job,status.value);status.value=job.lane"
+          [disabled]="!!saving || loading"
+        >
+          <option value="planned">Planned</option>
+          <option value="active">Active</option>
+          <option value="complete">Complete</option>
+          <option value="archived">Archived</option>
+        </select>
+        <button
+          class="details-toggle"
+          [attr.aria-expanded]="expanded===job.jobSlug"
+          [attr.aria-label]="'Details for '+job.name+' at '+job.customerName"
+          (click)="expanded=expanded===job.jobSlug?'':job.jobSlug"
+        >
+          {{expanded===job.jobSlug?'−':'+'}}
+        </button>
+      </div>
+      <div class="job-details" *ngIf="expanded===job.jobSlug">
+        <div [innerHTML]="job.body || 'No scope added yet.'"></div>
+        <ul *ngIf="job.taskList?.length">
+          <li *ngFor="let task of job.taskList">
+            <button
+              type="button"
+              class="task-toggle"
+              role="checkbox"
+              [attr.aria-checked]="task.done"
+              [attr.aria-label]="task.title"
+              [disabled]="!!saving || loading"
+              (click)="toggleTask(job,task)"
+            >
+              <span aria-hidden="true">{{task.done?'✓':'○'}}</span>
+              <span [class.task-done]="task.done">{{task.title}}</span>
+            </button>
+          </li>
+        </ul>
+        <a [routerLink]="['/job',job.jobSlug]"
+          >Open job workspace →</a
+        >
+      </div>
+    </article>
+    <div *ngIf="!jobs.length&&!loading&&!error" class="empty-state">
+      <h4>No matching jobs</h4>
+      <p>Try a different search or clear the filters.</p>
+      <button class="btn btn-outline-primary" (click)="clear()">
+        Show all jobs
+      </button>
+    </div>
+  </div>
+  <footer class="board-footer">
+    <small
+      >Overdue first, then priority and due date · {{jobs.length}} of {{total}}
+      shown</small
+    ><button
+      class="btn btn-outline-primary"
+      *ngIf="jobs.length<total"
+      [disabled]="loading"
+      (click)="load(true)"
+    >
+      Load more
+    </button>
+  </footer>
+</section>

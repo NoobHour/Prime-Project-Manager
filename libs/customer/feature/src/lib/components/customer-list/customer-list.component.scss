@@ -1,0 +1,109 @@
+/* Keep search actions aligned with their inputs; narrow layouts stack without stretching button height. */
+:host {
+  display: block;
+}
+.customer-directory {
+  padding: 0 1.25rem 1.5rem;
+  text-align: left;
+}
+.directory-heading h2 {
+  font-size: 1.8rem;
+  margin: 0 0 0.4rem;
+}
+.directory-heading p {
+  color: #b4c1cf;
+  margin-bottom: 1.5rem;
+}
+.customer-filters {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(160px, 1fr) auto;
+  gap: 1rem;
+  align-items: end;
+  margin-bottom: 1.5rem;
+}
+.customer-filters label {
+  margin: 0;
+  color: #c1d2e2;
+  font-size: 0.9rem;
+}
+.customer-filters input,
+.customer-filters select {
+  margin-top: 0.4rem;
+}
+.search-action {
+  min-height: 38px;
+  white-space: nowrap;
+}
+/* Horizontal scrolling belongs to the contact table, rather than the whole page. */
+.customer-table-scroll {
+  overflow-x: auto;
+  border: 1px solid #3f4b5b;
+  border-radius: 0.35rem;
+}
+.customer-table {
+  width: 100%;
+  min-width: 640px;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+.customer-table th,
+.customer-table td {
+  text-align: left;
+  padding: 0.85rem 1rem;
+  overflow-wrap: anywhere;
+  border-bottom: 1px solid #3f4b5b;
+  vertical-align: top;
+}
+.customer-table th {
+  color: #8dd0ff;
+  background: #20262e;
+}
+.customer-table th:nth-child(2) {
+  width: 18%;
+}
+.customer-table tbody tr:nth-child(even) {
+  background: #252d37;
+}
+.customer-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+.customer-table a {
+  color: #8dd0ff;
+}
+.customer-table a:hover {
+  text-decoration: underline;
+}
+.customer-table .empty-customers {
+  text-align: center;
+  padding: 2rem 1rem;
+  color: #b4c1cf;
+}
+.directory-footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+.directory-footer p {
+  margin: 0;
+  color: #b4c1cf;
+}
+.customer-pagination {
+  display: flex;
+  gap: 0.5rem;
+}
+@media (max-width: 700px) {
+  .customer-directory {
+    padding: 0 0.75rem 1rem;
+  }
+  .customer-filters {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.8rem;
+  }
+  .directory-footer {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

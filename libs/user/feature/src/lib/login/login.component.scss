@@ -1,0 +1,9 @@
+/* Keep sign-in and first-run headings inside the card on phones. */
+h1 {
+  font-size: clamp(1.7rem, 5vw, 2.3rem);
+  line-height: 1.2;
+}
+.app-name {
+  color: #c4d7e8;
+  font-size: 1rem;
+}

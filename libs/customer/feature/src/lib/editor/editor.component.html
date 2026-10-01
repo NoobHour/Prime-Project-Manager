@@ -1,0 +1,218 @@
+<div class="editor-page">
+  <div class="container page">
+    <div class="prime-naked-card">
+      <h2 style="text-align: center">
+        {{ form.value.isLead ? 'Potential Customer' : 'Customer' }}
+      </h2>
+      <p *ngIf="error" role="alert">{{ error }}</p>
+      <p *ngIf="notice" role="status">{{ notice }}</p>
+      <div class="p-grid p-jc-center">
+        <div class="p-col-12 p-md-5">
+          <form [formGroup]="form" (ngSubmit)="submit()">
+            <label class="form-group d-block"
+              >Name<input
+                class="form-control"
+                formControlName="name"
+                maxlength="200"
+            /></label>
+            <div *ngIf="custSlug">
+              <h5>Avatar</h5>
+              <img
+                *ngIf="tcustomer?.avatar"
+                [src]="tcustomer.avatar"
+                alt="Customer avatar"
+                style="max-width: 150px; max-height: 150px"
+              /><label class="d-block"
+                >Upload avatar<input
+                  type="file"
+                  accept="image/png,image/jpeg,image/gif,image/webp"
+                  (change)="uploadAvatar($event)"
+              /></label>
+            </div>
+            <label class="form-group d-block"
+              >Phone<input class="form-control" formControlName="phone"
+            /></label>
+            <label class="form-group d-block"
+              >Address<input class="form-control" formControlName="address"
+            /></label>
+            <label class="form-group d-block"
+              >Email<input
+                type="email"
+                class="form-control"
+                formControlName="email"
+            /></label>
+            <label class="form-group d-block"
+              >Customer Description<textarea
+                class="form-control"
+                rows="4"
+                formControlName="body"
+              ></textarea>
+            </label>
+            <label class="d-block"
+              ><input type="checkbox" formControlName="isLead" /> Is
+              Lead?</label
+            >
+            <label class="d-block"
+              ><input type="checkbox" formControlName="isActive" />
+              Active</label
+            >
+            <label class="d-block"
+              ><input type="checkbox" formControlName="isComplete" />
+              Completed</label
+            >
+            <label class="d-block"
+              ><input type="checkbox" formControlName="isArchived" /> Archived
+              (clear to restore)</label
+            >
+            <button
+              class="btn btn-primary"
+              type="submit"
+              [disabled]="form.invalid || busy"
+            >
+              Save
+            </button>
+          </form>
+        </div>
+        <div class="p-col-12 p-md-4 p-md-offset-1">
+          <h5>Jobs</h5>
+          <label class="d-block"
+            >{{ custSlug ? 'New job' : 'First job (optional)'
+            }}<input
+              class="form-control"
+              [(ngModel)]="typedJob"
+              [disabled]="addingJob"
+              maxlength="200"
+          /></label>
+          <button
+            *ngIf="custSlug"
+            class="btn btn-outline-primary"
+            (click)="addNewJob()"
+            [disabled]="addingJob || !typedJob.trim()"
+          >
+            Add job
+          </button>
+          <form
+            *ngFor="let job of jobsList"
+            #jobForm="ngForm"
+            class="prime-naked-card mt-3"
+            (ngSubmit)="setJob(job)"
+          >
+            <fieldset [disabled]="savingJob === job.jobSlug">
+              <label class="d-block"
+                >Job title<input
+                  class="form-control"
+                  name="name"
+                  [(ngModel)]="job.name"
+                  required
+                  maxlength="200"
+              /></label>
+              <label class="d-block"
+                >Scope<textarea
+                  class="form-control"
+                  name="body"
+                  [(ngModel)]="job.body"
+                ></textarea>
+              </label>
+              <label class="d-block"
+                ><input
+                  type="checkbox"
+                  name="active"
+                  [(ngModel)]="job.isActive"
+                />
+                Active</label
+              >
+              <label class="d-block"
+                ><input
+                  type="checkbox"
+                  name="complete"
+                  [(ngModel)]="job.isComplete"
+                />
+                Completed</label
+              >
+              <label class="d-block"
+                ><input
+                  type="checkbox"
+                  name="archived"
+                  [(ngModel)]="job.isArchived"
+                />
+                Archived</label
+              >
+              <label class="d-block"
+                >Owner<select
+                  class="form-control"
+                  name="assigneeId"
+                  [(ngModel)]="job.assigneeId"
+                >
+                  <option value="">Unassigned</option>
+                  <option *ngFor="let member of team" [value]="member.id">
+                    {{ member.username }}
+                  </option>
+                </select></label
+              >
+              <label class="d-block"
+                >Due date<input
+                  type="date"
+                  class="form-control"
+                  name="dueDate"
+                  [(ngModel)]="job.dueDate"
+              /></label>
+              <label class="d-block"
+                >Priority<select
+                  class="form-control"
+                  name="priority"
+                  [(ngModel)]="job.priority"
+                >
+                  <option>low</option>
+                  <option>normal</option>
+                  <option>high</option>
+                  <option>urgent</option>
+                </select></label
+              >
+              <h6>Checklist</h6>
+              <div
+                *ngFor="let task of job.taskList; let n = index"
+                class="d-flex mb-2"
+                style="gap: 0.5rem"
+              >
+                <input
+                  type="checkbox"
+                  [name]="'done' + n"
+                  [(ngModel)]="task.done"
+                  [attr.aria-label]="'Complete ' + task.title"
+                /><input
+                  class="form-control"
+                  [name]="'task' + n"
+                  [(ngModel)]="task.title"
+                  required
+                  maxlength="200"
+                  aria-label="Checklist item"
+                /><button
+                  type="button"
+                  class="btn btn-outline-danger"
+                  (click)="removeTask(job, n)"
+                  aria-label="Remove checklist item"
+                >
+                  ×
+                </button>
+              </div>
+              <button
+                type="button"
+                class="btn btn-outline-primary btn-sm mb-3"
+                (click)="addTask(job)"
+                [disabled]="job.taskList?.length >= 100"
+              >
+                Add checklist item</button
+              ><button
+                type="submit"
+                class="btn btn-outline-primary"
+                [disabled]="!!savingJob || jobForm.invalid"
+              >
+                {{ savingJob === job.jobSlug ? 'Saving…' : 'Save job' }}
+              </button>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

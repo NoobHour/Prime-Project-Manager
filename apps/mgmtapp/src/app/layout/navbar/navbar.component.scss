@@ -1,0 +1,36 @@
+/* Wrap the full product name without shrinking its mark or pushing account controls offscreen. */
+.workspace-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+}
+.workspace-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #edf3f9;
+  text-decoration: none;
+  min-width: 0;
+}
+.workspace-brand img {
+  flex: 0 0 44px;
+}
+.workspace-brand span {
+  overflow-wrap: anywhere;
+}
+.workspace-account {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+@media (max-width: 800px) {
+  .workspace-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

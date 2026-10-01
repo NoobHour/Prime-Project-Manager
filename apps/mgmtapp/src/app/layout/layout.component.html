@@ -1,0 +1,43 @@
+<aside *ngIf="demo" class="demo-notice">
+  {{ sandbox ? 'Shared demo: everyone can see your changes. Fictional data only. Account changes and uploads are disabled.' : 'Demo workspace: fictional data; your live database is separate.' }}
+  <span *ngIf="sandbox">Resets at {{ resetTime }}. After a reset, sign in again.</span>
+</aside>
+<div style="padding: 0px; margin: 0px">
+  <mgmt-navbar
+    [isAuth]="userService?.isAuth"
+    [user]="userService?.userInfo"
+  ></mgmt-navbar>
+</div>
+<div
+  style="
+    position: relative;
+    padding-left: 1rem;
+    padding-right: 1rem;
+    padding-top: 1rem;
+    width: 95%;
+    margin: auto;
+    margin-top: 0px;
+    margin-bottom: 0.25rem;
+    z-index: 100;
+  "
+>
+  <nav class="p-tabmenu">
+    <ul class="p-tabmenu-nav">
+      <li
+        *ngFor="let item of items"
+        class="p-tabmenuitem"
+        routerLinkActive="p-highlight"
+        [routerLinkActiveOptions]="{ exact: true }"
+      >
+        <a class="p-menuitem-link" [routerLink]="item.routerLink"
+          ><i [class]="item.icon"></i> {{ item.label }}</a
+        >
+      </li>
+    </ul>
+  </nav>
+</div>
+<div class="panel-prime-title" style="position: relative; z-index: 1"></div>
+
+<div class="panel-prime" style="padding-top: 4rem">
+  <router-outlet></router-outlet>
+</div>

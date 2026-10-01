@@ -1,0 +1,9 @@
+/* Discussion drafts receive a keyboard-accessible confirmation before customer navigation. */
+:host { display: block; text-align: left; }
+/* Job links expose their actual status; spacing keeps the following customer notes heading clear. */
+.customer-job-link { display: flex; flex-direction: column; gap: .1rem; margin-bottom: .65rem; overflow-wrap: anywhere; }
+.customer-job-link small { color: #b4c1cf; }
+.customer-info { margin: 1rem 0 .5rem; overflow-wrap: anywhere; }
+.leave-backdrop { position: fixed; inset: 0; z-index: 1200; display: grid; place-items: center; padding: 1rem; background: #111a; }
+.leave-dialog { width: 100%; max-width: 440px; padding: 1.25rem; background: #2a323d; border: 1px solid #526174; border-radius: .5rem; box-shadow: 0 8px 40px #0008; }
+.leave-actions { display: flex; gap: .7rem; flex-wrap: wrap; }

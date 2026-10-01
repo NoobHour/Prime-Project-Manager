@@ -1,0 +1,39 @@
+.profile-summary {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1.5rem;
+  text-align: left;
+  flex-wrap: wrap;
+}
+.profile-summary > div:nth-child(2) {
+  flex: 1;
+}
+.profile-avatar {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background: #334b62;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  color: #8dd0ff;
+}
+.profile-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+.assigned-job {
+  display: flex;
+  flex-direction: column;
+  padding: 0.8rem 0;
+  border-bottom: 1px solid #3f4b5b;
+  margin-bottom: 0.7rem;
+}
+.assigned-job span,
+.assigned-job small {
+  color: #c3ceda;
+}

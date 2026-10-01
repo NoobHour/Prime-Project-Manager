@@ -1,0 +1,14 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "../../dist/api",
+    "rootDir": "../..",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "types": ["node"]
+  },
+  "files": ["src/main.ts", "src/demo-seed.ts"],
+  "include": [],
+  "exclude": ["**/*.spec.ts"]
+}

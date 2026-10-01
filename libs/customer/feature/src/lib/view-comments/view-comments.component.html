@@ -1,0 +1,135 @@
+<section class="discussion" [attr.aria-label]="combined ? 'Customer discussions' : jobSlug ? 'Job discussion' : 'Discussion'">
+  <div class="board-filter" *ngIf="combined"><label>Show messages<select class="form-control" [(ngModel)]="filter" (ngModelChange)="filterChanged()" [disabled]="busy || editing"><option value="all">All customer &amp; job boards</option><option value="general">Customer general</option><option *ngFor="let job of jobs" [value]="job.jobSlug">{{ job.name }}</option></select></label></div>
+  <header class="discussion-heading">
+    <span>{{ total }} {{ total === 1 ? 'message' : 'messages' }}</span
+    ><button
+      type="button"
+      class="btn btn-sm btn-outline-primary"
+      [disabled]="loading"
+      (click)="loadComments()"
+    >
+      Refresh
+    </button>
+  </header>
+  <div
+    #messageList
+    class="message-list"
+    role="log"
+    aria-live="polite"
+    aria-relevant="additions text"
+  >
+    <button
+      *ngIf="comments.length < total"
+      class="btn btn-sm btn-outline-primary"
+      (click)="loadComments(true)"
+      [disabled]="loading"
+    >
+      Load older messages
+    </button>
+    <p class="empty-discussion" *ngIf="!comments.length && !loading">
+      No messages yet. Share an update or ask your team a question.
+    </p>
+    <article
+      *ngFor="let message of ordered; trackBy: trackMessage"
+      class="message"
+      [class.own-message]="message.authorId === userService.userInfo?.id"
+    >
+      <a
+        class="message-avatar"
+        [routerLink]="'/@' + message.author.username"
+        [attr.aria-label]="message.author.username + ' profile'"
+        ><img
+          *ngIf="message.author.image; else initialsAvatar"
+          [src]="message.author.image"
+          alt=""
+        /><ng-template #initialsAvatar>{{
+          initials(message.author.username)
+        }}</ng-template></a
+      >
+      <div class="message-content">
+        <div class="board-label" *ngIf="combined"><a *ngIf="message.jobSlug; else generalBoard" [routerLink]="['/job',message.jobSlug]">{{ message.jobName || boardName(message.jobSlug) }}</a><ng-template #generalBoard>Customer general</ng-template></div>
+        <header>
+          <a [routerLink]="'/@' + message.author.username">{{
+            message.author.username
+          }}</a>
+          <time
+            [attr.datetime]="message.createdAt"
+            [title]="message.createdAt | date: 'medium'"
+            >{{ message.createdAt | date: 'MMM d, h:mm a' }}</time
+          ><small *ngIf="message.version > 1"> · edited</small>
+        </header>
+        <div class="message-body" [innerHTML]="message.body"></div>
+        <div class="message-actions"><button *ngIf="combined" type="button" (click)="chooseBoard(message.jobSlug || '')" [disabled]="busy || editing">Reply on this board</button>
+          <button
+            *ngIf="message.authorId === userService.userInfo?.id"
+            type="button"
+            (click)="edit(message)"
+          >
+            Edit</button
+          ><button
+            *ngIf="
+              message.authorId === userService.userInfo?.id ||
+              $any(userService.userInfo)?.role === 'admin'
+            "
+            type="button"
+            (click)="deleteComment(message.id)"
+          >
+            Remove
+          </button>
+        </div>
+      </div>
+    </article>
+  </div>
+  <form
+    [formGroup]="commentForm"
+    (ngSubmit)="postComment()"
+    class="message-composer"
+  >
+    <label class="posting-board" *ngIf="combined">Post to<select class="form-control" [ngModel]="destination" (ngModelChange)="chooseBoard($event)" [ngModelOptions]="{standalone:true}" [disabled]="busy || editing"><option value="">Customer general</option><option *ngFor="let job of jobs" [value]="job.jobSlug">{{ job.name }}</option></select></label>
+    <p *ngIf="!combined" class="posting-board">Posting to <strong>{{ boardName(destination) }}</strong></p>
+    <div *ngIf="editing" class="editing-notice">
+      Editing message
+      <button
+        type="button"
+        class="btn btn-sm btn-outline-primary"
+        (click)="cancelEdit()"
+      >
+        Cancel
+      </button>
+    </div>
+    <p-editor
+      formControlName="body"
+      [readonly]="busy"
+      [style]="{ height: '110px' }"
+      (onInit)="initEditor($event)"
+      (onTextChange)="composerChanged()"
+      placeholder="Write a message…"
+      ><ng-template #header
+        ><button class="ql-bold" aria-label="Bold"></button
+        ><button class="ql-italic" aria-label="Italic"></button
+        ><button
+          class="ql-list"
+          value="ordered"
+          aria-label="Numbered list"
+        ></button
+        ><button
+          class="ql-list"
+          value="bullet"
+          aria-label="Bullet list"
+        ></button
+        ><button class="ql-link" aria-label="Insert link"></button></ng-template
+    ></p-editor>
+    <footer>
+      <small>Enter to send · Shift+Enter for a new line</small
+      ><button
+        type="submit"
+        class="btn btn-primary"
+        [disabled]="busy || !hasText"
+      >
+        {{ busy ? 'Sending…' : editing ? 'Save edit' : 'Send' }}
+      </button>
+    </footer>
+  </form>
+  <p *ngIf="notice" role="status" class="discussion-notice">{{ notice }} <button *ngIf="hiddenSentBoard !== null" type="button" class="btn btn-sm btn-outline-primary" (click)="showSentBoard()">Show sent board</button></p>
+  <p *ngIf="error" role="alert" class="text-danger">{{ error }}</p>
+</section>

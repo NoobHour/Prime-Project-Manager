@@ -1,0 +1,31 @@
+<div class="app-shell">
+  <div class="app-content">
+    <router-outlet></router-outlet>
+  </div>
+  <!-- Global attribution appears on sign-in and workspace pages without obscuring their controls. -->
+  <footer class="app-footer" aria-label="Project attribution">
+    <div class="footer-credit">
+      <span>{{ brand.name }}</span>
+      <span>By <a [href]="brand.website" target="_blank" rel="noopener noreferrer">{{ brand.author }}</a></span>
+      <span>© {{ brand.copyright }}</span>
+    </div>
+    <nav class="footer-links" aria-label="Creator and license links">
+      <a [href]="brand.website" target="_blank" rel="noopener noreferrer">Website</a>
+      <a [href]="brand.github" target="_blank" rel="noopener noreferrer">GitHub</a>
+      <a [href]="brand.license" download="PPM-MIT-LICENSE.txt">MIT License</a>
+    </nav>
+    <!-- Native disclosure supports keyboard use and requires no additional application state. -->
+    <details class="footer-about">
+      <summary>About &amp; license</summary>
+      <div class="about-content">
+        <p>{{ brand.name }} ({{ brand.shortName }}) is a self-hosted customer and job workspace by {{ brand.author }}.</p>
+        <p>© {{ brand.copyright }}. Released under the MIT License, which permits use, modification and redistribution, including commercial use, with the copyright and license notice retained. The software is provided without warranty.</p>
+        <p>
+          <a [href]="brand.license" download="PPM-MIT-LICENSE.txt">Download the full MIT License</a>
+          <span aria-hidden="true"> · </span>
+          <a [href]="brand.notices" download="PPM-THIRD-PARTY-NOTICES.md">Third-party notices</a>
+        </p>
+      </div>
+    </details>
+  </footer>
+</div>

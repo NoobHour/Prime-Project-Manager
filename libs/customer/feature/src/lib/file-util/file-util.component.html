@@ -1,0 +1,54 @@
+<div class="prime-naked-card p-3">
+  <form (ngSubmit)="load()" class="file-filters">
+    <label>Search files<input class="form-control" type="search" name="search" [(ngModel)]="search" maxlength="200" placeholder="Filename…" /></label>
+    <label>Filter by tag<select class="form-control" name="tag" [(ngModel)]="activeTag" (ngModelChange)="load()"><option value="">All tags</option><option *ngFor="let tag of availableTags" [value]="tag">{{ tag }}</option></select></label>
+    <button class="btn btn-outline-primary" type="submit">Apply filters</button>
+    <button class="btn btn-outline-primary" type="button" (click)="clearFilters()" [disabled]="!search && !activeTag">Clear filters</button>
+  </form>
+  <p class="file-count" role="status">{{ total }} {{ total === 1 ? 'file' : 'files' }}{{ activeTag ? ' tagged '+activeTag : '' }}</p>
+  <div class="upload-settings">
+    <label *ngIf="!scopeJobSlug">Attach to<select class="form-control" [(ngModel)]="jobSlug" [disabled]="busy"><option value="">Customer (general)</option><option *ngFor="let job of jobs" [value]="job.jobSlug">{{ job.name }}</option></select></label>
+    <label>Category<select class="form-control" [(ngModel)]="category" [disabled]="busy"><option value="document">Contracts, quotes &amp; documents</option><option value="photo">Job photos</option><option value="misc">Miscellaneous</option><option value="avatar" *ngIf="!scopeJobSlug">Customer avatar</option></select></label>
+  </div>
+  <div class="tag-editor">
+    <label>Tags for new uploads<input class="form-control" [(ngModel)]="newTag" maxlength="200" placeholder="e.g. inspection" [disabled]="busy" (keydown.enter)="$event.preventDefault(); addTag('upload')" /></label>
+    <button class="btn btn-outline-primary" type="button" [disabled]="busy || !newTag.trim()" (click)="addTag('upload')">Add tag</button>
+  </div>
+  <div class="tag-chips"><button *ngFor="let tag of uploadTags" type="button" class="tag-chip" [disabled]="busy" [attr.aria-label]="'Remove upload tag '+tag" (click)="removeTag('upload',tag)">{{ tag }} ×</button></div>
+  <label class="upload-label">Upload files<input class="form-control" type="file" multiple [disabled]="busy" (change)="upload($event)" /></label>
+  <small>Add one tag at a time. Press Enter or Add tag. Files can have multiple tags.</small>
+  <form *ngIf="editing" #fileForm="ngForm" (ngSubmit)="save()" class="prime-naked-card p-3 my-3">
+    <h5>Edit file details</h5>
+    <fieldset [disabled]="busy">
+      <label class="d-block">Filename<input class="form-control" name="name" [(ngModel)]="editing.name" required maxlength="200" /></label>
+      <label class="d-block">Job<select class="form-control" name="job" [(ngModel)]="editing.jobSlug"><option value="">Customer (general)</option><option *ngFor="let job of jobs" [value]="job.jobSlug">{{ job.name }}</option></select></label>
+      <label class="d-block">Category<select class="form-control" name="category" [(ngModel)]="editing.category"><option value="document">Documents</option><option value="photo">Photos</option><option value="avatar">Avatar</option><option value="misc">Miscellaneous</option></select></label>
+      <div class="tag-editor"><label>Add file tag<input class="form-control" name="editTag" [(ngModel)]="editTag" maxlength="200" (keydown.enter)="$event.preventDefault(); addTag('edit')" /></label><button class="btn btn-outline-primary" type="button" [disabled]="!editTag.trim()" (click)="addTag('edit')">Add file tag</button></div>
+      <div class="tag-chips"><button *ngFor="let tag of editing.tags" type="button" class="tag-chip" [attr.aria-label]="'Remove file tag '+tag" (click)="removeTag('edit',tag)">{{ tag }} ×</button></div>
+      <div class="file-actions"><button type="submit" class="btn btn-primary" [disabled]="fileForm.invalid || !editing.name.trim()">{{ busy ? 'Saving…' : 'Save file' }}</button><button type="button" class="btn btn-outline-primary" (click)="editing = null">Cancel</button></div>
+    </fieldset>
+  </form>
+  <p class="mt-3">Images can be viewed here or opened at full size. Maximum 10 MB per file; 2 MB for an avatar.</p>
+  <p *ngIf="error" role="alert" class="text-danger">{{ error }}</p>
+  <p *ngIf="notice" role="status">{{ notice }}</p>
+  <p *ngIf="loading" role="status">Loading files…</p>
+  <button class="btn btn-outline-primary mb-2" type="button" (click)="downloadSelected()" [disabled]="busy || !hasSelection" *ngIf="files.length">Download selected as ZIP</button>
+  <div class="row">
+    <article *ngFor="let file of files" class="col-md-4 mb-3">
+      <div class="card p-3 h-100">
+        <label><input type="checkbox" [(ngModel)]="file.selected" /> Select {{ file.name }}</label>
+        <a *ngIf="file.fileType.startsWith('image/')" [href]="'/api/files/' + file.id + '/view'" target="_blank" rel="noopener"><img [src]="'/api/files/' + file.id + '/view'" [alt]="file.name" class="file-preview" loading="lazy" /></a>
+        <strong class="mt-2">{{ file.name }}</strong><small>{{ file.category }} · {{ file.fileSize / 1024 | number:'1.0-1' }} KB</small>
+        <div class="tag-chips"><button *ngFor="let tag of file.tags" type="button" class="tag-chip" (click)="filterTag(tag)" [attr.aria-label]="'Filter files by '+tag">{{ tag }}</button><small *ngIf="!file.tags?.length">No tags</small></div>
+        <div class="file-actions mt-2">
+          <button type="button" class="btn btn-outline-primary btn-sm" (click)="edit(file)" [disabled]="busy" *ngIf="file.authorId === users.userInfo?.id || $any(users.userInfo)?.role === 'admin'">Edit details</button>
+          <a *ngIf="file.fileType.startsWith('image/')" class="btn btn-outline-primary btn-sm" [href]="'/api/files/' + file.id + '/view'" target="_blank" rel="noopener">View image</a>
+          <a class="btn btn-primary btn-sm" [href]="'/api/files/' + file.id + '/download'">Download</a>
+          <button *ngIf="file.authorId === users.userInfo?.id || $any(users.userInfo)?.role === 'admin'" type="button" class="btn btn-outline-danger btn-sm" [disabled]="busy" (click)="remove(file)">Delete</button>
+        </div>
+      </div>
+    </article>
+  </div>
+  <p *ngIf="!loading && !error && !files.length">{{ search || activeTag ? 'No files match these filters.' : 'No files uploaded.' }}</p>
+  <button type="button" class="btn btn-outline-primary" *ngIf="files.length < total" [disabled]="loading" (click)="load(true)">Load more files</button>
+</div>

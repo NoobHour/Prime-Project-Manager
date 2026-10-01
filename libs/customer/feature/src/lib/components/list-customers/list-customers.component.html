@@ -1,0 +1,30 @@
+<ng-container *ngIf="customers?.length; else noPosts">
+  <div class="row no-gutters">
+    <ng-container
+      *ngFor="let item of customers; index as i; even as isEven; odd as isOdd"
+    >
+      <div
+        class="col no-gutters"
+        style="margin-right: 0.75rem; margin-left: 0.75 rem"
+      >
+        <mgmt-customer-item [customer]="item"></mgmt-customer-item>
+      </div>
+
+      <div class="w-100" *ngIf="isRowEven(i)"></div>
+    </ng-container>
+  </div>
+  <div class="row no-gutters" *ngIf="collectionSize > pageSize">
+    <div class="col-12">
+      <ngb-pagination
+        [pageSize]="pageSize"
+        [collectionSize]="collectionSize"
+        [page]="page"
+        (pageChange)="pageChange.emit($event)"
+      ></ngb-pagination>
+    </div>
+  </div>
+</ng-container>
+
+<ng-template #noPosts>
+  <ng-container>Nothing to display.</ng-container>
+</ng-template>

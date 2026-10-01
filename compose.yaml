@@ -1,0 +1,26 @@
+name: ppm
+services:
+  ppm:
+    build: .
+    restart: unless-stopped
+    init: true
+    environment:
+      MGMT_ORIGIN: ${MGMT_ORIGIN:-http://localhost:3333}
+      MGMT_PORT: '3333'
+      MGMT_HOST: '0.0.0.0'
+      MGMT_DATA_DIR: /data
+    # Only this computer can access the published port by default.
+    ports:
+      - '127.0.0.1:${PPM_PORT:-3333}:3333'
+    volumes:
+      - ppm-data:/data
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    stop_grace_period: 30s
+volumes:
+  ppm-data:

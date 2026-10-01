@@ -1,0 +1,32 @@
+<!-- Customer card with readable contacts and protected avatars. -->
+<div class="panel-prime-icust">
+  <a [routerLink]="['/customer', customer?.slug]" class="preview-link">
+    <h5 class="customer-name">{{ customer?.name }}</h5>
+    <img
+      *ngIf="customer?.avatar; else defaultAvatar"
+      class="customer-avatar"
+      [src]="customer.avatar"
+      alt="Customer avatar"
+    />
+    <ng-template #defaultAvatar
+      ><i class="pi pi-user customer-icon" aria-hidden="true"></i
+    ></ng-template>
+    <dl>
+      <dt>Phone</dt>
+      <dd>{{ customer?.phone || 'Not provided' }}</dd>
+      <dt>Email</dt>
+      <dd>{{ customer?.email || 'Not provided' }}</dd>
+    </dl>
+    <span class="customer-status">{{
+      customer?.isArchived
+        ? 'Archived'
+        : customer?.isComplete
+          ? 'Completed'
+          : customer?.isLead
+            ? 'Lead'
+            : customer?.isActive
+              ? 'Active customer'
+              : 'Inactive'
+    }}</span>
+  </a>
+</div>

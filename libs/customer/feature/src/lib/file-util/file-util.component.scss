@@ -1,0 +1,16 @@
+/* Filters and upload controls wrap independently; tags never widen a file card beyond its column. */
+.file-filters, .tag-editor, .file-actions { display: flex; align-items: flex-end; flex-wrap: wrap; gap: .75rem; }
+.file-filters label, .tag-editor label { flex: 1 1 220px; margin: 0; }
+.file-filters { margin-bottom: .75rem; }
+.upload-settings { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 1rem; }
+.upload-settings label, .upload-label { display: block; }
+.tag-editor { margin: .5rem 0; }
+.form-control { margin-top: .3rem; }
+.upload-label { margin-top: .6rem; }
+.tag-chips { display: flex; flex-wrap: wrap; gap: .4rem; margin: .6rem 0; }
+.tag-chip { border: 1px solid #526174; border-radius: 1rem; padding: .15rem .6rem; color: #8dd0ff; background: #20262e; overflow-wrap: anywhere; max-width: 100%; }
+.tag-chip:hover, .tag-chip:focus-visible { border-color: #8dd0ff; }
+.card { overflow-wrap: anywhere; }
+fieldset { min-width: 0; border: 0; padding: 0; margin: 0; }
+.file-preview { width: 100%; height: 180px; object-fit: contain; background: #20262e; border: 1px solid #3f4b5b; }
+@media (max-width: 550px) { .upload-settings { grid-template-columns: minmax(0,1fr); gap: 0; } }

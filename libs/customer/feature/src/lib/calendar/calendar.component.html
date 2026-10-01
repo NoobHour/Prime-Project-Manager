@@ -1,0 +1,171 @@
+<section class="calendar-panel">
+  <div class="appointment-list" *ngIf="events$ | async; let appointments">
+    <h5>Appointments</h5>
+    <p *ngIf="!loading && !appointments.length">No appointments yet.</p>
+    <button *ngFor="let appointment of appointments" type="button" class="appointment-row" (click)="eventClicked(appointment)" [disabled]="busy">
+      <strong>{{ appointment.title }}</strong><span>{{ appointment.start | date:'MMM d, yyyy, h:mm a' }} – {{ appointment.end | date:'h:mm a' }}</span><small>Edit appointment →</small>
+    </button>
+  </div>
+  <form [formGroup]="form" (ngSubmit)="submit()" class="appointment-form">
+    <h5>{{ selected ? 'Edit appointment' : 'New appointment' }}</h5>
+    <fieldset [disabled]="busy">
+      <label *ngIf="!jobSlug && jobs.length">Attach to<select class="form-control" formControlName="jobSlug"><option value="">Customer (general)</option><option *ngFor="let job of jobs" [value]="job.jobSlug">{{ job.name }}</option></select></label>
+      <label
+        >Subject<input
+          class="form-control"
+          formControlName="subject"
+          maxlength="200"
+      /></label>
+      <div class="appointment-times">
+        <label
+          >Start<input
+            type="datetime-local"
+            class="form-control"
+            formControlName="start"
+        /></label>
+        <label
+          >End<input
+            type="datetime-local"
+            class="form-control"
+            formControlName="end"
+        /></label>
+      </div>
+      <label id="appointment-notes-label">Notes</label>
+      <p-editor formControlName="body" [style]="{height:'100px'}" [readonly]="busy" (onInit)="initializeNotes($event)">
+        <ng-template #header><span class="ql-formats"><button type="button" class="ql-bold" aria-label="Bold notes"></button><button type="button" class="ql-italic" aria-label="Italic notes"></button><button type="button" class="ql-list" value="bullet" aria-label="Bullet list in notes"></button><button type="button" class="ql-clean" aria-label="Clear notes formatting"></button></span></ng-template>
+      </p-editor>
+      <p class="text-danger" *ngIf="form.hasError('timeRange')" role="alert">
+        End must be after start.
+      </p>
+      <div class="calendar-actions">
+        <button
+          class="btn btn-primary"
+          [disabled]="form.invalid || busy"
+          type="submit"
+        >
+          {{ busy ? 'Saving…' : 'Save appointment' }}
+        </button>
+        <button
+          class="btn btn-outline-primary"
+          type="button"
+          (click)="cancel()"
+        >
+          {{ selected ? 'Cancel edit' : 'Clear' }}
+        </button>
+        <button
+          *ngIf="selected"
+          class="btn btn-outline-danger"
+          type="button"
+          (click)="remove()"
+        >
+          Delete
+        </button>
+      </div>
+    </fieldset>
+    <p *ngIf="error" role="alert" class="text-danger">{{ error }}</p>
+    <p *ngIf="notice" role="status">{{ notice }}</p>
+  </form>
+  <!-- One wrapping toolbar serves all three views; native buttons support keyboard navigation. -->
+  <header class="calendar-toolbar">
+    <div class="calendar-actions" aria-label="Calendar navigation">
+      <button
+        type="button"
+        class="btn btn-outline-primary"
+        aria-label="Previous period"
+        mwlCalendarPreviousView
+        [view]="view"
+        [(viewDate)]="viewDate"
+        (viewDateChange)="closeOpenMonthViewDay()"
+      >
+        ‹
+      </button>
+      <button
+        type="button"
+        class="btn btn-outline-primary"
+        mwlCalendarToday
+        [(viewDate)]="viewDate"
+        (viewDateChange)="closeOpenMonthViewDay()"
+      >
+        Today
+      </button>
+      <button
+        type="button"
+        class="btn btn-outline-primary"
+        aria-label="Next period"
+        mwlCalendarNextView
+        [view]="view"
+        [(viewDate)]="viewDate"
+        (viewDateChange)="closeOpenMonthViewDay()"
+      >
+        ›
+      </button>
+    </div>
+    <h5 aria-live="polite">
+      {{ viewDate | calendarDate: view + 'ViewTitle' : 'en' }}
+    </h5>
+    <div class="calendar-actions" aria-label="Calendar view">
+      <button
+        type="button"
+        class="btn btn-outline-primary"
+        [class.active]="view === CalendarView.Month"
+        [attr.aria-pressed]="view === CalendarView.Month"
+        (click)="setView(CalendarView.Month)"
+      >
+        Month
+      </button>
+      <button
+        type="button"
+        class="btn btn-outline-primary"
+        [class.active]="view === CalendarView.Week"
+        [attr.aria-pressed]="view === CalendarView.Week"
+        (click)="setView(CalendarView.Week)"
+      >
+        Week
+      </button>
+      <button
+        type="button"
+        class="btn btn-outline-primary"
+        [class.active]="view === CalendarView.Day"
+        [attr.aria-pressed]="view === CalendarView.Day"
+        (click)="setView(CalendarView.Day)"
+      >
+        Day
+      </button>
+    </div>
+  </header>
+  <p *ngIf="loading" role="status">Loading appointments…</p>
+  <div
+    class="calendar-scroll"
+    tabindex="0"
+    role="region"
+    aria-label="Appointments calendar"
+    [attr.aria-busy]="loading"
+  >
+    <div
+      class="calendar-grid"
+      *ngIf="events$ | async; let events"
+      [ngSwitch]="view"
+    >
+      <mwl-calendar-month-view
+        *ngSwitchCase="'month'"
+        [viewDate]="viewDate"
+        [events]="events"
+        [activeDayIsOpen]="activeDayIsOpen"
+        (dayClicked)="dayClicked($event.day)"
+        (eventClicked)="eventClicked($event.event)"
+      ></mwl-calendar-month-view>
+      <mwl-calendar-week-view
+        *ngSwitchCase="'week'"
+        [viewDate]="viewDate"
+        [events]="events"
+        (eventClicked)="eventClicked($event.event)"
+      ></mwl-calendar-week-view>
+      <mwl-calendar-day-view
+        *ngSwitchCase="'day'"
+        [viewDate]="viewDate"
+        [events]="events"
+        (eventClicked)="eventClicked($event.event)"
+      ></mwl-calendar-day-view>
+    </div>
+  </div>
+</section>

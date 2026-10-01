@@ -1,0 +1,36 @@
+<div class="customer-meta" style="margin-bottom: 0px; padding-bottom: 0px">
+  <a
+    class="btn btn-sm btn-outline-primary"
+    [routerLink]="['/editor', customer?.slug]"
+    [state]="{ data: customer }"
+  >
+    <i class="ion-edit"></i>
+    &nbsp; Edit Customer
+  </a>
+  &nbsp;&nbsp;
+
+  <button
+    type="button"
+    class="btn btn-sm btn-outline-danger"
+    (click)="toggleArchived.emit(true)"
+  >
+    <i class="ion-trash-a"></i>
+    &nbsp; Archive Customer
+  </button>
+
+  <div class="p-grid p-nogutter">
+    <div
+      class="p-col-12 p-p-0 p-m-0 p-col-nogutter p-jc-center"
+      style="
+        font-size: small;
+        color: #ffffffa1;
+        margin-bottom: 0px;
+        padding-bottom: 0px;
+      "
+    >
+      Customer added by {{ customer?.author?.username }} on
+
+      {{ customer?.createdAt | date }}
+    </div>
+  </div>
+</div>

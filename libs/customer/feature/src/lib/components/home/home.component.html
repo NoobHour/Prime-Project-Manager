@@ -1,0 +1,49 @@
+<div class="home-dashboard">
+  <section class="attention-panel">
+    <header>
+      <div>
+        <span class="eyebrow">FOCUS FOR TODAY</span>
+        <h2>Needs attention</h2>
+      </div>
+      <span class="count">{{ total }}</span>
+    </header>
+    <p class="intro">
+      Urgent and overdue jobs. Everything else is on the Job Board.
+    </p>
+    <p *ngIf="loading" role="status">Loading work…</p>
+    <p *ngIf="error" role="alert">{{ error }}</p>
+    <a
+      *ngFor="let job of jobs"
+      class="attention-job"
+      [routerLink]="['/job', job.jobSlug]"
+      ><div>
+        <strong>{{ job.name }}</strong
+        ><span>{{ job.customerName }}</span>
+      </div>
+      <div class="job-reason">
+        <span [class.overdue]="isOverdue(job)">{{
+          isOverdue(job) ? 'Overdue' : (job.priority | titlecase)
+        }}</span
+        ><small>{{
+          job.dueDate ? (job.dueDate | date: 'MMM d' : 'UTC') : 'No due date'
+        }}</small>
+      </div></a
+    >
+    <div class="empty" *ngIf="!loading && !error && !jobs.length">
+      <h4>Nothing urgent right now</h4>
+      <p>Check the board for upcoming work and assignments.</p>
+    </div>
+    <footer>
+      <a routerLink="/jobs" [queryParams]="{ attention: 'true' }"
+        >View all {{ total }} needing attention →</a
+      ><a routerLink="/jobs">Open Job Board</a>
+    </footer>
+  </section>
+  <section class="team-panel">
+    <header>
+      <span class="eyebrow">TEAM UPDATES</span>
+      <h2>Team Board</h2>
+    </header>
+    <view-comments slug="__team__"></view-comments>
+  </section>
+</div>

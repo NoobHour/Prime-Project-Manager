@@ -1,0 +1,31 @@
+/* Keep staff contacts readable while containing table overflow inside the access list. */
+:host {
+  display: block;
+}
+.staff-card {
+  max-width: 900px;
+  text-align: left;
+}
+.staff-card h2 {
+  font-size: 1.8rem;
+  margin-bottom: 1.25rem;
+}
+.staff-table-scroll {
+  overflow-x: auto;
+}
+.staff-table {
+  min-width: 600px;
+  margin: 0;
+}
+.staff-table th:last-child {
+  width: 130px;
+}
+.staff-table td {
+  overflow-wrap: anywhere;
+}
+.staff-access {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.4rem;
+}

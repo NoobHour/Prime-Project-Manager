@@ -1,0 +1,62 @@
+<div *ngIf="demo" class="demo-notice">
+  {{ sandbox ? 'Shared demo: changes are visible to everyone and reset periodically. Use fictional data only. Account changes and uploads are disabled.' : 'Demo workspace: fictional records; changes stay in the test database.' }}
+  <button
+    type="button"
+    class="btn btn-primary"
+    [disabled]="busy"
+    (click)="enterDemo()"
+  >
+    Try as project manager
+  </button>
+  <button
+    type="button"
+    class="btn btn-outline-primary"
+    [disabled]="busy"
+    (click)="enterDemo(true)"
+  >
+    Try as staff
+  </button>
+</div>
+<div class="card" style="padding: 20px; margin-top: 10%">
+  <div class="text-center mb-4">
+    <img [src]="brand.logo" [alt]="brand.name" width="80" height="80" />
+    <p class="app-name mt-3">{{ brand.name }} · {{ brand.shortName }}</p>
+  </div>
+  <h1 class="text-white">{{ setup ? 'Set up your workspace' : 'Sign in' }}</h1>
+  <p *ngIf="setup">
+    Enter the setup code shown in the server terminal to create your
+    administrator account.
+  </p>
+  <form (ngSubmit)="login()" [formGroup]="form">
+    <label *ngIf="setup" class="d-block"
+      >Setup code<input
+        class="form-control"
+        formControlName="code"
+        autocomplete="off"
+    /></label>
+    <label *ngIf="setup" class="d-block"
+      >Name<input
+        class="form-control"
+        formControlName="username"
+        maxlength="60"
+    /></label>
+    <label class="d-block"
+      >Email<input
+        class="form-control"
+        type="email"
+        formControlName="email"
+        autocomplete="username"
+    /></label>
+    <label class="d-block"
+      >Password<input
+        class="form-control"
+        type="password"
+        formControlName="password"
+        [attr.autocomplete]="setup ? 'new-password' : 'current-password'"
+    /></label>
+    <p role="alert" class="text-danger">{{ error }}</p>
+    <button class="btn btn-primary" [disabled]="busy || form.invalid">
+      {{ setup ? 'Create administrator' : 'Login' }}
+    </button>
+  </form>
+</div>

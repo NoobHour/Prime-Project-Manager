@@ -1,0 +1,9 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "../../dist/out-tsc/web",
+    "types": ["node"]
+  },
+  "files": ["src/main.ts"],
+  "include": ["src/**/*.d.ts"]
+}

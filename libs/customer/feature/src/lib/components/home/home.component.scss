@@ -1,0 +1,104 @@
+/* Give conversation and actionable work equal space instead of repeating customer contact cards. */
+.home-dashboard {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 1.5rem;
+  padding: 0 1.5rem 2rem;
+  text-align: left;
+}
+.attention-panel,
+.team-panel {
+  min-width: 0;
+  background: #2a323d;
+  padding: 1.25rem;
+  border: 1px solid #3f4b5b;
+  border-radius: 0.4rem;
+}
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.team-panel header {
+  display: block;
+  margin-bottom: 1rem;
+}
+h2 {
+  font-size: 1.6rem;
+  margin: 0.2rem 0;
+}
+.eyebrow {
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  color: #8dd0ff;
+}
+.intro {
+  color: #b4c1cf;
+  font-size: 0.88rem;
+  margin: 1rem 0;
+}
+.count {
+  background: #334b62;
+  color: #b9e2ff;
+  padding: 0.3rem 0.8rem;
+  border-radius: 1rem;
+}
+.attention-job {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 0;
+  border-bottom: 1px solid #3f4b5b;
+  color: #ecf4fb;
+  text-decoration: none;
+}
+.attention-job:hover strong {
+  color: #8dd0ff;
+}
+.attention-job strong,
+.attention-job span,
+.attention-job small {
+  display: block;
+}
+.attention-job strong {
+  font-size: 0.92rem;
+}
+.attention-job div > span {
+  font-size: 0.8rem;
+  color: #aec0d2;
+  margin-top: 0.2rem;
+}
+.job-reason {
+  text-align: right;
+  flex-shrink: 0;
+}
+.job-reason span {
+  color: #ffe09c !important;
+}
+.job-reason span.overdue {
+  color: #ffbdad !important;
+}
+.job-reason small {
+  color: #b4c1cf;
+  font-size: 0.75rem;
+}
+footer {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  font-size: 0.85rem;
+  margin-top: 1.2rem;
+}
+.empty {
+  padding: 2rem 0;
+  color: #b4c1cf;
+}
+@media (max-width: 900px) {
+  .home-dashboard {
+    grid-template-columns: 1fr;
+    padding: 0 0.5rem 1rem;
+    gap: 1rem;
+  }
+}

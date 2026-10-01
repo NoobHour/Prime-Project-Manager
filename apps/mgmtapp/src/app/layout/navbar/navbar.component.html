@@ -1,0 +1,15 @@
+<div class="panel-header workspace-header">
+  <a routerLink="/" class="workspace-brand"
+    ><img [src]="brand.logo" alt="" width="44" height="44" /><span>{{
+      brand.name
+    }}</span></a
+  >
+  <div class="workspace-account" *ngIf="isAuth">
+    <a class="btn btn-outline-primary" [routerLink]="'/@' + user?.username">{{
+      user?.username
+    }}</a
+    ><a class="btn btn-outline-primary" routerLink="/settings">Settings</a
+    ><a class="btn btn-outline-primary" routerLink="/register">Staff accounts</a
+    ><button class="btn btn-outline-primary" (click)="logout()">Logout</button>
+  </div>
+</div>

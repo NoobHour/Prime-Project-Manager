@@ -1,0 +1,124 @@
+<section class="customer-directory" aria-labelledby="customer-list-title">
+  <header class="directory-heading">
+    <h2 id="customer-list-title">Customer List</h2>
+    <p>Find customer contacts and open their project details.</p>
+  </header>
+  <form
+    (ngSubmit)="load()"
+    class="customer-filters"
+    aria-label="Customer search"
+  >
+    <label for="customer-search"
+      >Search
+      <input
+        id="customer-search"
+        class="form-control"
+        name="search"
+        [(ngModel)]="search"
+        maxlength="200"
+        placeholder="Name, phone, email or address"
+      />
+    </label>
+    <label for="customer-status"
+      >Status
+      <select
+        id="customer-status"
+        class="form-control"
+        name="status"
+        [(ngModel)]="status"
+      >
+        <option value="current">Current</option>
+        <option value="all">All</option>
+        <option value="lead">Leads</option>
+        <option value="complete">Completed</option>
+        <option value="archived">Archived</option>
+      </select>
+    </label>
+    <button
+      class="btn btn-primary search-action"
+      type="submit"
+      [disabled]="loading"
+    >
+      {{ loading ? 'Searching…' : 'Search' }}
+    </button>
+  </form>
+  <p *ngIf="error" role="alert" class="text-danger">{{ error }}</p>
+  <div
+    class="customer-table-scroll"
+    role="region"
+    aria-label="Customer contacts"
+    tabindex="0"
+    [attr.aria-busy]="loading"
+  >
+    <table class="customer-table">
+      <caption class="sr-only">
+        Customers matching your search and status filter
+      </caption>
+      <thead>
+        <tr>
+          <th scope="col">Name</th>
+          <th scope="col">Phone</th>
+          <th scope="col">Email</th>
+          <th scope="col">Address</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let customer of customers">
+          <td>
+            <a
+              [routerLink]="['/customer', customer.slug]"
+              [state]="{ data: customer }"
+              >{{ customer.name }}</a
+            >
+          </td>
+          <td>{{ customer.phone || '—' }}</td>
+          <td>
+            <a
+              *ngIf="customer.email; else noEmail"
+              [href]="'mailto:' + customer.email"
+              >{{ customer.email }}</a
+            ><ng-template #noEmail>—</ng-template>
+          </td>
+          <td>{{ customer.address || '—' }}</td>
+        </tr>
+        <tr *ngIf="!customers.length">
+          <td colspan="4" class="empty-customers">
+            {{
+              loading
+                ? 'Loading customers…'
+                : error
+                  ? 'Customer results could not be loaded. Try Search again.'
+                  : 'No customers match these filters.'
+            }}
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <footer class="directory-footer">
+    <p role="status">
+      {{ total }} {{ total === 1 ? 'customer' : 'customers'
+      }}<span *ngIf="total">
+        · Showing {{ offset + 1 }}–{{ offset + customers.length }}</span
+      >
+    </p>
+    <nav class="customer-pagination" aria-label="Customer pages">
+      <button
+        type="button"
+        class="btn btn-outline-primary"
+        [disabled]="loading || offset === 0"
+        (click)="load(offset - 25)"
+      >
+        Previous
+      </button>
+      <button
+        type="button"
+        class="btn btn-outline-primary"
+        [disabled]="loading || offset + 25 >= total"
+        (click)="load(offset + 25)"
+      >
+        Next
+      </button>
+    </nav>
+  </footer>
+</section>

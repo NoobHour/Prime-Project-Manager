@@ -1,0 +1,7 @@
+# The Angular build uses esbuild's verified platform binary; telemetry and optional native rebuilds stay disabled.
+allowBuilds:
+  '@parcel/watcher': false
+  '@scarf/scarf': false
+  esbuild: true
+  lmdb: false
+  msgpackr-extract: false

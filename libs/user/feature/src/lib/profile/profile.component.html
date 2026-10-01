@@ -1,0 +1,60 @@
+<div class="container profile-page">
+  <p *ngIf="error" role="alert">{{ error }}</p>
+  <ng-container *ngIf="profile"
+    ><section class="prime-naked-card profile-summary">
+      <div class="profile-avatar">
+        <img
+          *ngIf="profile.image; else initialsAvatar"
+          [src]="profile.image"
+          alt="Profile picture"
+        /><ng-template #initialsAvatar>{{
+          initials(profile.username)
+        }}</ng-template>
+      </div>
+      <div>
+        <h2>{{ profile.username }}</h2>
+        <p>
+          {{ profile.jobTitle || 'Team member' }} ·
+          {{ profile.role === 'admin' ? 'Administrator' : 'Staff' }}
+        </p>
+        <a [href]="'mailto:' + profile.email">{{ profile.email }}</a>
+        <p *ngIf="profile.phone">
+          <a [href]="'tel:' + profile.phone">{{ profile.phone }}</a>
+        </p>
+        <small>Joined {{ profile.createdAt | date: 'mediumDate' }}</small>
+      </div>
+      <a
+        *ngIf="userService.userInfo?.id === profile.id"
+        routerLink="/settings"
+        class="btn btn-outline-primary"
+        >Edit my profile</a
+      >
+    </section>
+    <section class="prime-naked-card p-4 mt-3 text-left">
+      <h4>About</h4>
+      <p style="white-space: pre-wrap">
+        {{ profile.bio || 'No introduction yet.' }}
+      </p>
+    </section>
+    <section class="prime-naked-card p-4 mt-3 text-left">
+      <h4>
+        Assigned work <span class="badge badge-secondary">{{ total }}</span>
+      </h4>
+      <p *ngIf="!jobs.length">No open jobs assigned.</p>
+      <a
+        *ngFor="let job of jobs"
+        [routerLink]="['/editor', job.customerSlug]"
+        class="assigned-job"
+        ><strong>{{ job.name }}</strong
+        ><span
+          >{{ job.customerName }} ·
+          {{ job.priority | titlecase }} priority</span
+        ><small>{{
+          job.dueDate ? 'Due ' + job.dueDate : 'No due date'
+        }}</small></a
+      ><a routerLink="/jobs" [queryParams]="{ assignee: profile.id }"
+        >View assigned job board</a
+      >
+    </section></ng-container
+  >
+</div>

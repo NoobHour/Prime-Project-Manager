@@ -1,0 +1,72 @@
+/* Keep the editor and toolbar aligned; only the calendar grid scrolls on narrow screens. */
+:host {
+  display: block;
+  min-width: 0;
+}
+.calendar-panel {
+  padding: 1rem;
+  background: #2a323d;
+  border-radius: 0.4rem;
+}
+/* A readable list makes appointments discoverable even outside the displayed calendar month. */
+.appointment-list { margin-bottom: 1.5rem; }
+.appointment-row { display: flex; flex-wrap: wrap; gap: .5rem 1rem; width: 100%; align-items: center; justify-content: space-between; padding: .8rem; margin-bottom: .5rem; text-align: left; color: #e6edf5; background: #20262e; border: 1px solid #526174; border-radius: .3rem; }
+.appointment-row strong, .appointment-row small { color: #8dd0ff; }
+.appointment-row:focus-visible, .appointment-row:hover { border-color: #8dd0ff; }
+.appointment-form {
+  max-width: 850px;
+  margin-bottom: 1.5rem;
+}
+fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.appointment-form label {
+  display: block;
+  margin-bottom: 0.8rem;
+}
+.appointment-form input,
+.appointment-form textarea {
+  margin-top: 0.3rem;
+}
+.appointment-times {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+.calendar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.appointment-form .calendar-actions { margin-top: 1rem; }
+.calendar-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+.calendar-toolbar h5 {
+  margin: 0;
+}
+.calendar-scroll {
+  overflow-x: auto;
+  border: 1px solid #526174;
+  border-radius: 0.3rem;
+}
+.calendar-grid {
+  min-width: 580px;
+}
+@media (max-width: 600px) {
+  .appointment-times {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+  .calendar-panel {
+    padding: 0.6rem;
+  }
+}

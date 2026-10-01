@@ -1,0 +1,37 @@
+/* The job stays prominent while the customer and related work remain visible beside its editor. */
+:host { display: block; min-width: 0; }
+.job-page { max-width: 1480px; margin: auto; padding: 1.5rem; text-align: left; }
+.leave-backdrop { position: fixed; inset: 0; z-index: 1200; display: grid; place-items: center; padding: 1rem; background: #111a; }
+.leave-dialog { width: 100%; max-width: 440px; box-shadow: 0 8px 40px #0008; }
+.job-navigation, .customer-actions, .save-bar { display: flex; flex-wrap: wrap; gap: .8rem; align-items: center; }
+.job-navigation { margin-bottom: 1.2rem; }
+.job-heading { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; justify-content: space-between; margin-bottom: 1.2rem; }
+.job-heading h1 { font-size: 2rem; margin: .3rem 0; overflow-wrap: anywhere; }
+.job-heading p { margin: 0; color: #c4cdd8; }
+.eyebrow { color: #8dd0ff; font-size: .8rem; letter-spacing: .1em; }
+.job-layout { display: grid; grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr); gap: 1.2rem; align-items: start; }
+.panel { min-width: 0; background: #2a323d; border: 1px solid #465366; border-radius: .5rem; padding: 1.25rem; scroll-margin-top: 6rem; }
+.panel h2 { font-size: 1.3rem; margin-bottom: 1rem; }
+.panel h3 { font-size: 1.1rem; margin: 0; }
+.customer-sidebar { display: grid; min-width: 0; gap: 1.2rem; }
+.resources { grid-column: 1 / -1; min-width: 0; }
+fieldset { min-width: 0; border: 0; margin: 0; padding: 0; }
+.details-panel label { display: block; margin-bottom: 1rem; }
+.form-control { margin-top: .3rem; }
+.planning-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 1rem; }
+.checklist-heading { display: flex; flex-wrap: wrap; gap: .5rem; justify-content: space-between; margin: 1.25rem 0 .75rem; }
+.checklist-heading span { color: #c4cdd8; }
+.checklist-row { display: flex; gap: .6rem; align-items: center; margin-bottom: .7rem; }
+.checklist-row .form-control { min-width: 0; margin: 0; }
+.save-bar { margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #465366; }
+.customer-heading { display: flex; gap: .8rem; align-items: center; margin: .6rem 0 1rem; }
+.customer-heading h2 { margin: 0; overflow-wrap: anywhere; }
+.customer-heading img { width: 4rem; height: 4rem; object-fit: cover; border-radius: .5rem; }
+dt { color: #8dd0ff; font-size: .9rem; margin-top: .8rem; }
+dd, .customer-notes { overflow-wrap: anywhere; }
+dd { margin: .2rem 0 0; }
+.customer-notes { padding-top: .5rem; }
+.related-job { display: block; padding: .8rem 0; border-top: 1px solid #465366; overflow-wrap: anywhere; }
+.related-job span { display: block; color: #c4cdd8; font-size: .9rem; margin-top: .3rem; }
+@media (max-width: 900px) { .job-layout { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 550px) { .job-page { padding: .8rem; } .panel { padding: .9rem; } .planning-fields { grid-template-columns: minmax(0, 1fr); } .job-heading h1 { font-size: 1.6rem; } }

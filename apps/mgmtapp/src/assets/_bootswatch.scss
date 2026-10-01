@@ -1,0 +1,548 @@
+//Bootstrap 4.6.0
+
+// Variables ===================================================================
+
+// Navbar ======================================================================
+
+.navbar {
+  &.bg-primary {
+    border: 1px solid $gray-700;
+  }
+
+  &.bg-dark {
+    background-color: $body-bg !important;
+    border: 1px solid $gray-700;
+  }
+
+  &.bg-light {
+    background-color: $gray-500 !important;
+  }
+
+  &.fixed-top {
+    border-width: 0 0 1px;
+  }
+
+  &.fixed-bottom {
+    border-width: 1px 0 0;
+  }
+}
+
+// Buttons =====================================================================
+
+.btn {
+  @each $color, $value in $theme-colors {
+    &-#{$color} {
+      @if $enable-gradients {
+        background: $value
+          linear-gradient(180deg, mix($white, $value, 15%), $value)
+          repeat-x;
+      } @else {
+        background-color: $value;
+      }
+    }
+  }
+}
+
+// Tables ======================================================================
+
+table {
+  color: $white;
+}
+
+.table {
+  &-primary {
+    &,
+    > th,
+    > td {
+      background-color: $primary;
+    }
+  }
+
+  &-secondary {
+    &,
+    > th,
+    > td {
+      background-color: $secondary;
+    }
+  }
+
+  &-light {
+    &,
+    > th,
+    > td {
+      background-color: $light;
+    }
+  }
+
+  &-dark {
+    &,
+    > th,
+    > td {
+      background-color: $dark;
+    }
+  }
+
+  &-success {
+    &,
+    > th,
+    > td {
+      background-color: $success;
+    }
+  }
+
+  &-info {
+    &,
+    > th,
+    > td {
+      background-color: $info;
+    }
+  }
+
+  &-danger {
+    &,
+    > th,
+    > td {
+      background-color: $danger;
+    }
+  }
+
+  &-warning {
+    &,
+    > th,
+    > td {
+      background-color: $warning;
+    }
+  }
+
+  &-active {
+    &,
+    > th,
+    > td {
+      background-color: $table-active-bg;
+    }
+  }
+
+  &-hover {
+    .table-primary:hover {
+      &,
+      > th,
+      > td {
+        background-color: darken($primary, 5%);
+      }
+    }
+
+    .table-secondary:hover {
+      &,
+      > th,
+      > td {
+        background-color: darken($secondary, 5%);
+      }
+    }
+
+    .table-light:hover {
+      &,
+      > th,
+      > td {
+        background-color: darken($light, 5%);
+      }
+    }
+
+    .table-dark:hover {
+      &,
+      > th,
+      > td {
+        background-color: darken($dark, 5%);
+      }
+    }
+
+    .table-success:hover {
+      &,
+      > th,
+      > td {
+        background-color: darken($success, 5%);
+      }
+    }
+
+    .table-info:hover {
+      &,
+      > th,
+      > td {
+        background-color: darken($info, 5%);
+      }
+    }
+
+    .table-danger:hover {
+      &,
+      > th,
+      > td {
+        background-color: darken($danger, 5%);
+      }
+    }
+
+    .table-warning:hover {
+      &,
+      > th,
+      > td {
+        background-color: darken($warning, 5%);
+      }
+    }
+
+    .table-active:hover {
+      &,
+      > th,
+      > td {
+        background-color: $table-active-bg;
+      }
+    }
+  }
+}
+
+// Forms =======================================================================
+
+legend {
+  color: $white;
+}
+
+.form-control {
+  background-clip: padding-box;
+
+  &:hover {
+    border-color: $primary;
+    border-width: 3px;
+  }
+  &:focus {
+    border-color: $primary;
+    border-width: 1px;
+    box-shadow: 0px 0px 0px 3px $primary;
+  }
+
+  &:disabled,
+  &[readonly] {
+    border-color: transparent;
+  }
+}
+
+// Navs ========================================================================
+
+.nav-tabs,
+.nav-pills {
+  .nav-link {
+    color: $white;
+
+    &:hover {
+      background-color: $gray-700;
+    }
+
+    &.disabled,
+    &.disabled:hover {
+      background-color: transparent;
+      color: $nav-link-disabled-color;
+    }
+
+    &.active {
+      background-color: $primary;
+    }
+  }
+}
+
+.breadcrumb {
+  a {
+    color: $white;
+  }
+}
+
+.pagination {
+  a:hover {
+    text-decoration: none;
+  }
+}
+
+// Indicators ==================================================================
+
+.alert {
+  border: none;
+  color: $white;
+
+  a,
+  .alert-link {
+    color: $white;
+    text-decoration: underline;
+  }
+
+  @each $color, $value in $theme-colors {
+    &-#{$color} {
+      @if $enable-gradients {
+        background: $value
+          linear-gradient(180deg, mix($white, $value, 15%), $value)
+          repeat-x;
+      } @else {
+        background-color: $value;
+      }
+    }
+  }
+}
+
+.badge {
+  &-warning {
+    color: $white;
+  }
+}
+
+.close {
+  opacity: 0.6;
+
+  &:hover {
+    opacity: 1;
+  }
+}
+
+// Containers ==================================================================
+
+.commentOut {
+  p {
+    margin-bottom: 0rem;
+  }
+}
+
+.list-group-item {
+  &:hover {
+    background-color: $surface-800;
+    color: $white;
+  }
+
+  &-action {
+    color: $surface-900;
+
+    .list-group-item-heading {
+      color: $white;
+    }
+  }
+
+  &:hover .list-group-item-heading {
+    color: $white;
+  }
+}
+.card {
+  box-shadow:
+    0px 0px 8px 4px rgba(0, 0, 0, 0.308),
+    inset 0 0 4px 1px #3f4b5b;
+}
+
+.card {
+  &-comp {
+    width: fit-content;
+    padding: 0.75rem;
+  }
+}
+.card {
+  &:hover a {
+    color: $surface-a;
+  }
+}
+
+.card,
+.list-group-item {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  p {
+    color: $white;
+  }
+}
+
+.popover {
+  &-title {
+    border-bottom: none;
+  }
+}
+
+// Dropdownmenu ==================================================================
+
+.dropdown-menu {
+  border-width: 1px;
+  border-color: $primary;
+}
+
+// Custom panel ==================================================================
+
+.panel-header {
+  background-color: $surface-100;
+  padding: 5px;
+  padding-bottom: 0px;
+  margin: auto;
+  width: 95%;
+  border: 1px solid #3f4b5b;
+  max-height: 150px;
+  border-radius: 0.25rem;
+  border-top-left-radius: 0px;
+  border-top-right-radius: 0px;
+  margin-top: -5px;
+  margin-bottom: 0px;
+  box-shadow:
+    0px 0px 8px 4px rgba(0, 0, 0, 0.308),
+    inset 0 0 4px 1px #3f4b5b;
+}
+
+.panel-prime {
+  text-align: center;
+  background-color: $surface-100;
+  padding: 5px;
+  margin: auto;
+  margin-bottom: 1rem;
+  width: 95%;
+  border: 1px solid #3f4b5b;
+  border-radius: 0.25rem;
+  box-shadow:
+    0px 0px 8px 4px rgba(0, 0, 0, 0.308),
+    inset 0 0 4px 1px #3f4b5b;
+}
+
+.panel-prime-title {
+  height: 3.5rem;
+  margin-bottom: -3.5rem;
+  padding: 0px;
+  background-color: rgba(0, 0, 0, 0);
+  border-color: $primary;
+  border-style: solid;
+  border-radius: 0.25rem;
+  border-bottom-left-radius: 0rem;
+  border-bottom-right-radius: 0rem;
+  border-width: 0rem;
+  border-bottom-width: 0.25rem;
+  margin-top: -3.5rem;
+  margin-right: auto;
+  margin-left: auto;
+  width: 95%;
+  box-shadow: 0 12px 8px -8px black;
+}
+
+.panel-prime-announ {
+  text-align: center;
+  color: $dark;
+  font-size: large;
+  font-weight: bold;
+  background-color: $primary;
+  padding: 5px;
+  padding-top: 2.5rem;
+  margin: auto;
+  width: 75%;
+  border: 1px solid $black;
+  max-height: 150px;
+  border-radius: 0.25rem;
+  border-top-left-radius: 0px;
+  border-top-right-radius: 0px;
+  margin-top: -5px;
+  margin-bottom: -1rem;
+  box-shadow: none;
+}
+
+.prime-naked-card {
+  background-color: $surface-a;
+  max-height: fit-content;
+  padding: 0.5rem;
+  max-width: 100%;
+  border: 1px solid #3f4b5b;
+  border-radius: 0.25rem;
+  box-shadow:
+    0px 0px 8px 4px rgba(0, 0, 0, 0.308),
+    inset 0 0 4px 1px #3f4b5b;
+}
+
+.placemat {
+  padding: 1rem;
+  padding-top: 1rem;
+  width: 100%;
+  height: 100%;
+}
+
+//ITEMS========================================================
+
+.panel-prime-icust {
+  text-align: center;
+  background-color: $surface-a;
+  max-height: fit-content;
+  padding: 0.75rem;
+  max-width: 100%;
+  margin-bottom: 2rem;
+  width: fit-content;
+  border: 1px solid #3f4b5b;
+  border-radius: 0.25rem;
+  box-shadow:
+    0px 0px 8px 4px rgba(0, 0, 0, 0.308),
+    inset 0 0 4px 1px #3f4b5b;
+}
+
+.panel-prime-icust {
+  &:hover a {
+    color: $surface-a;
+  }
+}
+.div-nolinkHL {
+  &:hover a {
+    color: $surface-a;
+  }
+}
+
+.item-sub1 {
+  margin: 0;
+  margin-top: -0.25rem;
+  margin-bottom: -0.4rem;
+  padding-top: 0.25rem;
+}
+
+.item-sub2-ul {
+  height: 0.3rem;
+  width: 100%;
+  border: 0rem solid #8dd0ff;
+  border-top-width: 0.15rem;
+  margin-top: -0.2rem;
+  margin-bottom: 0.5rem;
+  padding: 0px;
+}
+
+::-webkit-scrollbar {
+  min-width: 16px;
+  width: 16px;
+  max-width: 16px;
+  min-height: 16px;
+  height: 16px;
+  max-height: 16px;
+  background-color: #2a323d00;
+}
+
+::-webkit-scrollbar-track {
+  background: #2a323d00;
+}
+
+::-webkit-scrollbar-track-piece {
+  background: #8dd0ff41;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #8dd0ff80;
+  border: none;
+  border-radius: 6px;
+  border: solid 0px #8dd0ff27;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: #8dd0ffb4;
+}
+
+::-webkit-scrollbar-thumb:active {
+  background-color: #8dd0ffb4;
+}
+
+::-webkit-scrollbar-button {
+  display: contents;
+  height: 0px;
+  width: 0px;
+  background-color: #8dd0ff80;
+}
+
+::-webkit-scrollbar-corner {
+  background-color: #2a323d00;
+}

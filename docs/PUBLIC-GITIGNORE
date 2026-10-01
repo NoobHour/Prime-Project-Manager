@@ -1,0 +1,26 @@
+node_modules/
+dist/
+.angular/
+coverage/
+.env
+.env.*
+!.env.example
+*.log
+*.sqlite
+*.sqlite-*
+session-key
+.prime-demo
+.seeded
+backups/
+data/
+.DS_Store
+Thumbs.db
+*.db
+*.pem
+*.key
+*.pfx
+*.zip
+uploads/
+
+# Stopped-server Docker backups contain private records and signing keys.
+ppm-backup*/

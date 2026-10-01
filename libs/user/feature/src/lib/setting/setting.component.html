@@ -1,0 +1,92 @@
+<div class="container settings-page">
+  <div
+    class="prime-naked-card p-4 text-left"
+    style="max-width: 760px; margin: auto"
+  >
+    <h2>My profile & settings</h2>
+    <p>
+      Your team can see your name, contact details, introduction and assigned
+      work.
+    </p>
+    <p role="status">{{ message }}</p>
+    <form [formGroup]="form" (ngSubmit)="form.valid && update()">
+      <fieldset [disabled]="busy">
+        <h4>Profile</h4>
+        <div class="p-grid">
+          <label class="p-col-12 p-md-6"
+            >Display name<input
+              class="form-control"
+              formControlName="username"
+              autocomplete="name" /></label
+          ><label class="p-col-12 p-md-6"
+            >Job title<input
+              class="form-control"
+              formControlName="jobTitle"
+              placeholder="Project manager, estimator…" /></label
+          ><label class="p-col-12 p-md-6"
+            >Email<input
+              type="email"
+              class="form-control"
+              formControlName="email"
+              autocomplete="email" /></label
+          ><label class="p-col-12 p-md-6"
+            >Phone<input
+              type="tel"
+              class="form-control"
+              formControlName="phone"
+              autocomplete="tel"
+          /></label>
+        </div>
+        <label class="d-block"
+          >About me<textarea
+            class="form-control"
+            formControlName="bio"
+            rows="3"
+            placeholder="Your responsibilities, expertise and availability"
+          ></textarea></label
+        ><label class="d-block"
+          >Profile picture URL (optional)<input
+            type="url"
+            class="form-control"
+            formControlName="image"
+            placeholder="https://…"
+        /></label>
+        <p class="small">Leave blank to use your initials.</p>
+        <h4 class="mt-4">Account security</h4>
+        <p class="small">
+          Current password is required when changing your email or password.
+        </p>
+        <label class="d-block"
+          >Current password<input
+            type="password"
+            class="form-control"
+            formControlName="currentPassword"
+            autocomplete="current-password"
+        /></label>
+        <div class="p-grid">
+          <label class="p-col-12 p-md-6"
+            >New password<input
+              type="password"
+              class="form-control"
+              formControlName="password"
+              autocomplete="new-password"
+              placeholder="Leave blank to keep current password" /></label
+          ><label class="p-col-12 p-md-6"
+            >Confirm new password<input
+              type="password"
+              class="form-control"
+              formControlName="confirmPassword"
+              autocomplete="new-password"
+          /></label>
+        </div>
+        <button
+          type="submit"
+          class="btn btn-primary"
+          [disabled]="form.invalid || busy"
+        >
+          {{ busy ? 'Saving…' : 'Save changes' }}
+        </button>
+      </fieldset>
+    </form>
+  </div>
+</div>

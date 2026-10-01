@@ -1,0 +1,276 @@
+/* Shared application styles and theme imports. */
+
+/* Importing Bootstrap SCSS file. */
+@import './assets/variables';
+@import 'bootstrap/scss/bootstrap';
+@import './assets/bootswatch'; /* Restore the structural rules formerly supplied by PrimeNG 11's base stylesheet. */
+.p-tabmenu-nav,
+.p-tabview-nav {
+  display: flex;
+  flex-wrap: wrap;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  gap: 0.25rem;
+}
+.p-menuitem-link,
+.p-tabview-nav-link {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+}
+.p-tabmenuitem {
+  display: flex;
+}
+.panel-header {
+  max-height: none;
+}
+.p-tabview-panels {
+  text-align: left;
+}
+.p-datatable-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.p-datatable th,
+.p-datatable td {
+  padding: 1rem;
+  text-align: left;
+  border-bottom: 1px solid #3f4b5b;
+}
+.p-datatable th {
+  background: #20262e;
+  color: #8dd0ff;
+}
+.p-datatable tbody tr:nth-child(even) {
+  background: #252d37;
+}
+.p-divider {
+  display: flex;
+  align-items: center;
+  margin: 1rem 0;
+}
+.p-divider:before,
+.p-divider:after {
+  content: '';
+  border-top: 1px solid #3f4b5b;
+  flex: 1;
+}
+.p-divider-content {
+  padding: 0 0.5rem;
+}
+.ql-toolbar.ql-snow,
+.ql-container.ql-snow {
+  border-color: #3f4b5b;
+  background: #20262e;
+  color: #fff;
+}
+.ql-snow .ql-stroke {
+  stroke: #8dd0ff;
+}
+.ql-snow .ql-fill {
+  fill: #8dd0ff;
+}
+.ql-snow .ql-picker {
+  color: #8dd0ff;
+}
+.ql-snow .ql-picker-options {
+  background: #2a323d;
+}
+.ql-editor.ql-blank:before {
+  color: #aebac8;
+}
+.cal-month-view,
+.cal-week-view,
+.cal-day-view {
+  background: #2a323d;
+  color: #fff;
+}
+/* Vendor calendar styles load first so its default white surfaces cannot erase the dark palette. */
+.cal-month-view .cal-header,
+.cal-week-view .cal-day-headers {
+  background: #20262e;
+  color: #8dd0ff;
+}
+.cal-month-view .cal-day-number {
+  color: #edf3f9;
+  opacity: 1;
+}
+.cal-month-view .cal-day-cell.cal-out-month .cal-day-number {
+  color: #9dacbd;
+  opacity: 0.75;
+}
+.cal-month-view .cal-day-cell.cal-weekend .cal-day-number {
+  color: #8dd0ff;
+}
+.cal-week-view .cal-day-headers .cal-header:hover,
+.cal-week-view .cal-day-headers .cal-header.cal-today {
+  background: #243f55;
+}
+.cal-week-view .cal-header.cal-weekend span {
+  color: #8dd0ff;
+}
+.cal-week-view .cal-current-time-marker {
+  background: #ffb4aa;
+}
+.cal-month-view .cal-cell-row:hover,
+.cal-month-view .cal-cell-row .cal-cell:hover,
+.cal-month-view .cal-cell.cal-has-events.cal-open {
+  background: #3f4b5b;
+}
+.cal-month-view .cal-day-cell.cal-today {
+  background: #243f55;
+}
+.cal-month-view .cal-open-day-events {
+  background: #20262e;
+}
+.cal-week-view .cal-hour-odd {
+  background: #20262e;
+}
+.cal-week-view
+  .cal-time-events
+  .cal-day-columns:not(.cal-resize-active)
+  .cal-hour-segment:hover {
+  background: #3f4b5b;
+}
+@media (max-width: 767px) {
+  .panel-header,
+  .panel-prime {
+    width: 100%;
+  }
+  .p-tabmenu-nav {
+    font-size: 0.85rem;
+  }
+  .p-menuitem-link {
+    padding: 0.5rem !important;
+  }
+  .p-grid > .p-col-4,
+  .p-grid > .p-col-8 {
+    width: 100%;
+  }
+  .home-page .col-8 {
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
+}
+/* Keep visited file links readable against the dark surfaces. */
+a.btn-outline-primary:visited {
+  color: #8dd0ff;
+}
+/* Visited navigation links retain readable text when hover or keyboard focus fills the button. */
+a.btn-outline-primary:hover,
+a.btn-outline-primary:focus,
+a.btn-outline-primary:active {
+  color: #20262e;
+  background-color: #8dd0ff;
+  border-color: #8dd0ff;
+}
+.btn-outline-danger {
+  color: #ff8d8d;
+  border-color: #ff8d8d;
+}
+
+.demo-notice {
+  padding: 0.75rem 1rem;
+  background: #334b62;
+  border-bottom: 1px solid #8dd0ff;
+  color: #fff;
+  text-align: center;
+}
+.demo-notice button {
+  margin: 0.25rem;
+}
+.badge {
+  align-self: flex-start;
+}
+
+/* Native and library controls share the dark palette, including their open menus. */
+:root {
+  color-scheme: dark;
+}
+input:not([type='checkbox']):not([type='radio']):not([type='range']):not(
+    [type='button']
+  ):not([type='submit']),
+textarea,
+select,
+.form-control,
+.p-inputtext,
+.p-textarea,
+.p-select,
+.p-dropdown,
+.p-multiselect,
+.p-datepicker-input {
+  background-color: #20262e !important;
+  color: #edf3f9 !important;
+  border: 1px solid #526174 !important;
+  border-radius: 0.3rem;
+  color-scheme: dark;
+}
+input::placeholder,
+textarea::placeholder {
+  color: #9dacbd !important;
+  opacity: 1;
+}
+input:focus,
+textarea:focus,
+select:focus,
+.form-control:focus,
+.p-select:focus-within,
+.p-dropdown:focus-within {
+  border-color: #8dd0ff !important;
+  outline: 2px solid #8dd0ff55;
+  outline-offset: 1px;
+  box-shadow: none !important;
+}
+input:disabled,
+textarea:disabled,
+select:disabled,
+.form-control:disabled {
+  background-color: #2b3440 !important;
+  color: #9dacbd !important;
+  opacity: 0.75;
+}
+select option,
+select optgroup,
+.p-select-overlay,
+.p-dropdown-panel,
+.p-multiselect-overlay,
+.p-datepicker-panel,
+.p-select-list,
+.p-dropdown-items,
+.ql-snow .ql-tooltip {
+  background: #20262e !important;
+  color: #edf3f9 !important;
+  border-color: #526174 !important;
+}
+.p-select-option,
+.p-dropdown-item,
+.p-multiselect-option {
+  padding: 0.5rem 0.75rem;
+  color: #edf3f9;
+}
+.p-select-option:hover,
+.p-dropdown-item:hover,
+.p-multiselect-option:hover {
+  background: #334b62 !important;
+}
+input[type='checkbox'],
+input[type='radio'] {
+  accent-color: #8dd0ff;
+  color-scheme: dark;
+}
+input:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0 1000px #20262e inset !important;
+  -webkit-text-fill-color: #edf3f9 !important;
+}
+input[type='file']::file-selector-button {
+  background: #334b62;
+  color: #edf3f9;
+  border: 1px solid #526174;
+  padding: 0.4rem 0.7rem;
+}
+/* Errors must remain readable on the application's dark surfaces. */
+.text-danger {
+  color: #ffb4aa !important;
+}
