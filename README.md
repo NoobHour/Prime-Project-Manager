@@ -1,6 +1,6 @@
 # Prime Project Manager (PPM)
 
-A local project manager for small teams. Keep customers, jobs, deadlines, checklists, appointments, files and team conversations in one dark-themed workspace.
+A local project manager for individual teams. Keep customers, jobs, deadlines, checklists, appointments, files and team conversations in one dark-themed workspace.
 
 Built with Angular, NestJS and SQLite through TypeORM/sql.js. The frontend and API run together in a single Node.js process; no separate database service is needed.
 
