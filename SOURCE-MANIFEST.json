@@ -153,7 +153,7 @@
   },
   {
     "path": "apps/mgmtapp/src/styles.scss",
-    "sha256": "6b35b91277ba00c1e3da6cd2ae3c7a946e309177a5658b4792757ab65ee548e4"
+    "sha256": "7f758de7b7cdc9c1aabd012c8274c9bdce38c85001d80af0850eff6a1be1cc53"
   },
   {
     "path": "apps/mgmtapp/tsconfig.app.json",
@@ -269,7 +269,7 @@
   },
   {
     "path": "libs/customer/feature/src/lib/calendar/calendar.component.scss",
-    "sha256": "5f306a3b06f8d6a7758a0c0e6f64218d43093e595efe847f383696373b9c052a"
+    "sha256": "1ca074ba24349fce5b47f70e3843a541db942eeea1064f0fbbf13cd595632951"
   },
   {
     "path": "libs/customer/feature/src/lib/calendar/calendar.component.ts",

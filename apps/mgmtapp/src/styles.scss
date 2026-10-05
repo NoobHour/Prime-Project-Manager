@@ -81,58 +81,114 @@
 .ql-editor.ql-blank:before {
   color: #aebac8;
 }
+/* Calendar overrides follow the vendor CSS and share the app's slate/blue palette.
+   Keep these global: the month, week and day grids render inside library components. */
+.calendar-panel {
+  --calendar-cell: var(--surface-d, #3f4b5b);
+  --calendar-weekend: #323d49;
+  --calendar-hover: #526579;
+  --calendar-today: #76a6c8;
+  --calendar-line: var(--surface-b, #20262e);
+}
 .cal-month-view,
 .cal-week-view,
 .cal-day-view {
-  background: #2a323d;
-  color: #fff;
+  background: var(--calendar-cell);
+  color: #edf3f9;
 }
-/* Vendor calendar styles load first so its default white surfaces cannot erase the dark palette. */
+/* Dark grid lines replace the vendor's pale borders in every calendar view. */
+.cal-month-view .cal-days,
+.cal-month-view .cal-day-cell:not(:last-child),
+.cal-month-view .cal-days .cal-cell-row,
+.cal-week-view,
+.cal-week-view .cal-day-headers,
+.cal-week-view .cal-day-headers .cal-header,
+.cal-week-view .cal-day-headers .cal-header:not(:last-child),
+.cal-week-view .cal-day-headers .cal-header:first-child,
+.cal-week-view .cal-day-column,
+.cal-week-view .cal-all-day-events,
+.cal-week-view .cal-time-events,
+.cal-week-view .cal-hour:not(:last-child) .cal-hour-segment,
+.cal-week-view .cal-hour:last-child :not(:last-child) .cal-hour-segment {
+  border-color: var(--calendar-line);
+}
 .cal-month-view .cal-header,
 .cal-week-view .cal-day-headers {
-  background: #20262e;
-  color: #8dd0ff;
+  background: var(--calendar-cell);
+  color: #edf3f9;
+  border-bottom: 2px solid var(--primary-color, #8dd0ff);
 }
-.cal-month-view .cal-day-number {
+/* Weekends stay darker; hover changes only the pointed day, not the entire week. */
+.cal-month-view .cal-cell-row:hover {
+  background: transparent;
+}
+.cal-month-view .cal-day-cell.cal-weekend {
+  background: var(--calendar-weekend);
+}
+.cal-month-view .cal-cell-row .cal-cell:hover,
+.cal-month-view .cal-cell.cal-has-events.cal-open {
+  background: var(--calendar-hover);
+}
+.cal-month-view .cal-day-number,
+.cal-month-view .cal-day-cell.cal-weekend .cal-day-number {
   color: #edf3f9;
   opacity: 1;
 }
 .cal-month-view .cal-day-cell.cal-out-month .cal-day-number {
-  color: #9dacbd;
-  opacity: 0.75;
+  color: #acb9c7;
+  opacity: 0.65;
 }
-.cal-month-view .cal-day-cell.cal-weekend .cal-day-number {
-  color: #8dd0ff;
+/* Today's blue tile remains distinct while hovered or expanded. */
+.cal-month-view .cal-day-cell.cal-today,
+.cal-month-view .cal-day-cell.cal-today:hover,
+.cal-month-view .cal-day-cell.cal-today.cal-open {
+  background: var(--calendar-today);
 }
-.cal-week-view .cal-day-headers .cal-header:hover,
-.cal-week-view .cal-day-headers .cal-header.cal-today {
-  background: #243f55;
+.cal-month-view .cal-day-cell.cal-today .cal-day-number {
+  color: #152536;
+  font-weight: 600;
+}
+.cal-month-view .cal-day-badge {
+  background: var(--surface-a, #2a323d);
+  color: #ff8d8d;
+}
+.cal-month-view .cal-open-day-events {
+  background: var(--surface-b, #20262e);
+  color: #edf3f9;
+  box-shadow: none;
+}
+/* The day view reuses the week grid, so these rules cover both timed views. */
+.cal-week-view .cal-hour-odd {
+  background: var(--calendar-weekend);
+}
+.cal-week-view .cal-day-headers span {
+  opacity: 1;
 }
 .cal-week-view .cal-header.cal-weekend span {
-  color: #8dd0ff;
+  color: var(--primary-color, #8dd0ff);
+}
+.cal-week-view .cal-day-headers .cal-header:hover,
+.cal-week-view .cal-time-events .cal-day-columns:not(.cal-resize-active) .cal-hour-segment:hover,
+.cal-week-view .cal-day-headers .cal-drag-over,
+.cal-week-view .cal-drag-over .cal-hour-segment {
+  background: var(--calendar-hover);
+}
+.cal-week-view .cal-day-headers .cal-header.cal-today,
+.cal-week-view .cal-header.cal-today span {
+  background: var(--calendar-today);
+  color: #152536;
+}
+.cal-week-view .cal-event {
+  background: var(--surface-a, #2a323d);
+  border-color: var(--primary-color, #8dd0ff);
+  color: #edf3f9;
 }
 .cal-week-view .cal-current-time-marker {
   background: #ffb4aa;
 }
-.cal-month-view .cal-cell-row:hover,
-.cal-month-view .cal-cell-row .cal-cell:hover,
-.cal-month-view .cal-cell.cal-has-events.cal-open {
-  background: #3f4b5b;
-}
-.cal-month-view .cal-day-cell.cal-today {
-  background: #243f55;
-}
-.cal-month-view .cal-open-day-events {
-  background: #20262e;
-}
-.cal-week-view .cal-hour-odd {
-  background: #20262e;
-}
-.cal-week-view
-  .cal-time-events
-  .cal-day-columns:not(.cal-resize-active)
-  .cal-hour-segment:hover {
-  background: #3f4b5b;
+/* Vendor drag feedback is important, so match its priority to keep the dark theme. */
+.cal-month-view .cal-day-cell.cal-drag-over {
+  background: var(--calendar-hover) !important;
 }
 @media (max-width: 767px) {
   .panel-header,

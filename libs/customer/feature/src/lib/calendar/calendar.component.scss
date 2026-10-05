@@ -49,13 +49,19 @@ fieldset {
   flex-wrap: wrap;
   gap: 1rem;
   margin-bottom: 1rem;
+  /* Frame the navigation with the same dark surface and blue accent as the app. */
+  padding: 0.75rem;
+  background: var(--surface-a, #2a323d);
+  border: 1px solid var(--surface-d, #3f4b5b);
+  border-bottom: 2px solid var(--primary-color, #8dd0ff);
+  border-radius: 0.3rem;
 }
 .calendar-toolbar h5 {
   margin: 0;
 }
 .calendar-scroll {
   overflow-x: auto;
-  border: 1px solid #526174;
+  border: 2px solid var(--surface-b, #20262e);
   border-radius: 0.3rem;
 }
 .calendar-grid {
