@@ -798,6 +798,36 @@ test('PPM application workflows', async (t) => {
       await json(await request('GET', '/jobs?lane=invalid'), 400);
     },
   );
+  /** Accepts no input; verifies both creation paths persist planning details and reject invalid or ambiguous customer choices without orphan records. */
+  await t.test('dedicated new job workflow saves existing or new customers atomically', async () => {
+    const fields = { name: 'Dedicated workflow job', body: '<p>Scope <script>bad()</script></p>', lane: 'active', assigneeId: admin.id, priority: 'high', dueDate: '2026-11-10', taskList: [{ id: 'step', title: 'Inspect site', done: false }] };
+    const existing = (await json(await request('POST', '/jobs', { customerSlug: customer.slug, job: fields }), 201)).data;
+    assert.equal(existing.customerSlug, customer.slug);
+    assert.equal(existing.isActive, true);
+    assert.equal(existing.lane, 'active');
+    assert.equal(existing.assigneeId, admin.id);
+    assert.equal(existing.priority, 'high');
+    assert.equal(existing.dueDate, '2026-11-10');
+    assert.equal(existing.taskList[0].title, 'Inspect site');
+    assert.doesNotMatch(existing.body, /script|bad/);
+    const both = (await json(await request('POST', '/jobs', { customer: { name: 'Created with job', email: 'new@example.test', phone: '555-0100', address: '10 Example St' }, job: { ...fields, lane: 'planned' } }), 201)).data;
+    const owner = (await json(await request('GET', '/customers/' + both.customerSlug))).detailData;
+    assert.equal(owner.name, 'Created with job');
+    assert.equal(owner.email, 'new@example.test');
+    assert.equal(owner.authorId, admin.id);
+    assert.equal(owner.isActive, true);
+    assert.equal(both.isActive, false);
+    const count = (await json(await request('GET', '/customers'))).total;
+    await json(await request('POST', '/jobs', { customer: { name: 'Must not persist' }, job: { ...fields, dueDate: 'invalid' } }), 400);
+    await json(await request('POST', '/jobs', { customer: { name: 'Must not persist', email: 'invalid' }, job: fields }), 400);
+    await json(await request('POST', '/jobs', { customer: null, job: fields }), 400);
+    await json(await request('POST', '/jobs', { customerSlug: customer.slug, customer: { name: 'Ambiguous' }, job: fields }), 400);
+    await json(await request('POST', '/jobs', { job: fields }), 400);
+    await json(await request('POST', '/jobs', { customerSlug: 'missing', job: fields }), 404);
+    await json(await request('DELETE', '/customers/' + owner.slug));
+    await json(await request('POST', '/jobs', { customerSlug: owner.slug, job: fields }), 409);
+    assert.equal((await json(await request('GET', '/customers'))).total, count);
+  });
   await t.test('logout revokes old authentication cookies', async () => {
     await json(await request('POST', '/users/logout', {}), 201);
     await json(await request('GET', '/user'), 401);

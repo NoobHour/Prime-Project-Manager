@@ -105,7 +105,7 @@
   },
   {
     "path": "apps/mgmtapp/src/app/layout/layout.component.ts",
-    "sha256": "847f8fcf6e183b2ee23e163c35a767e709862edbc3b887e9e63c4d314ae16f10"
+    "sha256": "f4b4d2eba042ba7e119202d6983bec853ff6679ec320d57aeec66329e9f5d2a0"
   },
   {
     "path": "apps/mgmtapp/src/app/layout/layout.module.ts",
@@ -197,7 +197,7 @@
   },
   {
     "path": "libs/customer/api/handlers/src/lib/customer-api-handlers.controller.ts",
-    "sha256": "2ba63a1da7ef0bc44ceffb0ec406281e71cd01ab8578fd63a71c9e57335b65ba"
+    "sha256": "5710818c4efe27a97322e7978cf5bb7318cda840fa8f76d458e78b42080c8f17"
   },
   {
     "path": "libs/customer/api/handlers/src/lib/customer-api-handlers.module.ts",
@@ -361,19 +361,19 @@
   },
   {
     "path": "libs/customer/feature/src/lib/editor/editor.component.html",
-    "sha256": "2f3dee5911471a2cb98c41e472e810da5087cc2ad79e90c8823e57350f90d501"
+    "sha256": "e40a1c7e09ce706bb7f2e961d91fcdf811f8ca97347d1e43b94d4e0b8beff459"
   },
   {
     "path": "libs/customer/feature/src/lib/editor/editor.component.scss",
-    "sha256": "0af3bbf86d5994c840106b6c14fc7ca5379d08abf138725a268af33694fbe044"
+    "sha256": "ec329f6fa19ed9aa9e4c34433a5985f48a491cf11835b3b2bb7cc419c9293e77"
   },
   {
     "path": "libs/customer/feature/src/lib/editor/editor.component.ts",
-    "sha256": "ba0b90a8047d78e377674940def160bd43fb88f3ab5374a0f9436a5e805c206a"
+    "sha256": "2718df3d4603c98e2fb4d6a93caf19642c3c4668ce58007003355e51f76897a6"
   },
   {
     "path": "libs/customer/feature/src/lib/editor/editor.module.ts",
-    "sha256": "506b41fb1f0fbc0e2e9cf8e1597de86ec5fb523b3a0d76963df50ad2b93715e5"
+    "sha256": "08075e450c5e3b484cb0d5d5b918a9a801930c913a6a1cc9d2747696a27a54c0"
   },
   {
     "path": "libs/customer/feature/src/lib/file-util/file-util.component.html",
@@ -393,7 +393,7 @@
   },
   {
     "path": "libs/customer/feature/src/lib/job-board.html",
-    "sha256": "e78272d15181070162801b8199b28123dde59625175a215fc3597fd68f1cfef8"
+    "sha256": "61f52d707211fde8bf549e1e5b7cc41a0c0a0b1c0f112790608a88ad7f987ef2"
   },
   {
     "path": "libs/customer/feature/src/lib/job-board.module.ts",
@@ -405,15 +405,15 @@
   },
   {
     "path": "libs/customer/feature/src/lib/job-view/job-view.component.html",
-    "sha256": "0b47afe8b74ed2e02cce77c5046167ad8f316ab449f4e6bea4b9fbe6dd14b0e6"
+    "sha256": "af87053dab209d985a300be4f137702ef06e763148d76b7ce936a0a8987ed5f8"
   },
   {
     "path": "libs/customer/feature/src/lib/job-view/job-view.component.scss",
-    "sha256": "71d41355740eed970b25e209f43d664a9ef0c7384ce9cb2ef289dc245b4cad23"
+    "sha256": "9313fd4d0d85fb1085abe8456719ecab6ab510b69e25b99e197fd58a39ede194"
   },
   {
     "path": "libs/customer/feature/src/lib/job-view/job-view.component.ts",
-    "sha256": "ef53b3ccee185834dfa73b6537bd36bcf016d4268647ac2d709a3cbc6c0d2530"
+    "sha256": "45d89ffdc12accf13a32d8e1ec6d3b2db09c16643378e5e8dbeee25c038fd47b"
   },
   {
     "path": "libs/customer/feature/src/lib/job-view/job-view.module.ts",
@@ -437,7 +437,7 @@
   },
   {
     "path": "libs/customer/feature/src/lib/view-customer/view-customer.component.html",
-    "sha256": "b33b722b7f5a7f8921fdfadd68d42cd25e07e3341e1cc8335506c5be7c756491"
+    "sha256": "023952db728157118e11c68ce53826a026bad891f1c615f8867e306c7a55391b"
   },
   {
     "path": "libs/customer/feature/src/lib/view-customer/view-customer.component.scss",
@@ -1005,7 +1005,7 @@
   },
   {
     "path": "test/frontend-behavior.test.cjs",
-    "sha256": "039b4fa321fae9323288c10bb79e434cf82883f376cc256a9fc79ff65d6d5016"
+    "sha256": "525a4722bdeb67f046c24b0b87a29073a085a3ba751298944b927f80dea150e9"
   },
   {
     "path": "test/migrations.test.cjs",
@@ -1029,7 +1029,7 @@
   },
   {
     "path": "test/workflows.test.cjs",
-    "sha256": "d3148df75fb3c5b01a710056c28b1752bfb844f58ce6f3294759f0de56e4b2cf"
+    "sha256": "6fe52e54f808228bf362be99a9f1a5d39b6f5d5fab93245ee995d61d86184074"
   },
   {
     "path": "tools/build.cjs",

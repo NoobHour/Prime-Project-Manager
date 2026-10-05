@@ -1,4 +1,6 @@
-<div class="editor-page">
+<!-- Leaving for a job workspace must not silently discard customer edits. -->
+<div class="leave-backdrop" *ngIf="leavePrompt"><section class="leave-dialog" role="alertdialog" aria-modal="true" aria-labelledby="editor-leave-heading" cdkTrapFocus [cdkTrapFocusAutoCapture]="true" (keydown.escape)="resolveLeave(false)"><h2 id="editor-leave-heading">Unsaved customer changes</h2><p>Save the customer before leaving, or discard these changes.</p><button type="button" class="btn btn-primary" cdkFocusInitial (click)="resolveLeave(false)">Keep editing</button> <button type="button" class="btn btn-outline-danger" (click)="resolveLeave(true)">Discard changes</button></section></div>
+<div class="editor-page" [inert]="leavePrompt">
   <div class="container page">
     <div class="prime-naked-card">
       <h2 style="text-align: center">
@@ -74,143 +76,13 @@
           </form>
         </div>
         <div class="p-col-12 p-md-4 p-md-offset-1">
+          <!-- Customer editing links to job workspaces without editing their details here. -->
           <h5>Jobs</h5>
-          <label class="d-block"
-            >{{ custSlug ? 'New job' : 'First job (optional)'
-            }}<input
-              class="form-control"
-              [(ngModel)]="typedJob"
-              [disabled]="addingJob"
-              maxlength="200"
-          /></label>
-          <button
-            *ngIf="custSlug"
-            class="btn btn-outline-primary"
-            (click)="addNewJob()"
-            [disabled]="addingJob || !typedJob.trim()"
-          >
-            Add job
-          </button>
-          <form
-            *ngFor="let job of jobsList"
-            #jobForm="ngForm"
-            class="prime-naked-card mt-3"
-            (ngSubmit)="setJob(job)"
-          >
-            <fieldset [disabled]="savingJob === job.jobSlug">
-              <label class="d-block"
-                >Job title<input
-                  class="form-control"
-                  name="name"
-                  [(ngModel)]="job.name"
-                  required
-                  maxlength="200"
-              /></label>
-              <label class="d-block"
-                >Scope<textarea
-                  class="form-control"
-                  name="body"
-                  [(ngModel)]="job.body"
-                ></textarea>
-              </label>
-              <label class="d-block"
-                ><input
-                  type="checkbox"
-                  name="active"
-                  [(ngModel)]="job.isActive"
-                />
-                Active</label
-              >
-              <label class="d-block"
-                ><input
-                  type="checkbox"
-                  name="complete"
-                  [(ngModel)]="job.isComplete"
-                />
-                Completed</label
-              >
-              <label class="d-block"
-                ><input
-                  type="checkbox"
-                  name="archived"
-                  [(ngModel)]="job.isArchived"
-                />
-                Archived</label
-              >
-              <label class="d-block"
-                >Owner<select
-                  class="form-control"
-                  name="assigneeId"
-                  [(ngModel)]="job.assigneeId"
-                >
-                  <option value="">Unassigned</option>
-                  <option *ngFor="let member of team" [value]="member.id">
-                    {{ member.username }}
-                  </option>
-                </select></label
-              >
-              <label class="d-block"
-                >Due date<input
-                  type="date"
-                  class="form-control"
-                  name="dueDate"
-                  [(ngModel)]="job.dueDate"
-              /></label>
-              <label class="d-block"
-                >Priority<select
-                  class="form-control"
-                  name="priority"
-                  [(ngModel)]="job.priority"
-                >
-                  <option>low</option>
-                  <option>normal</option>
-                  <option>high</option>
-                  <option>urgent</option>
-                </select></label
-              >
-              <h6>Checklist</h6>
-              <div
-                *ngFor="let task of job.taskList; let n = index"
-                class="d-flex mb-2"
-                style="gap: 0.5rem"
-              >
-                <input
-                  type="checkbox"
-                  [name]="'done' + n"
-                  [(ngModel)]="task.done"
-                  [attr.aria-label]="'Complete ' + task.title"
-                /><input
-                  class="form-control"
-                  [name]="'task' + n"
-                  [(ngModel)]="task.title"
-                  required
-                  maxlength="200"
-                  aria-label="Checklist item"
-                /><button
-                  type="button"
-                  class="btn btn-outline-danger"
-                  (click)="removeTask(job, n)"
-                  aria-label="Remove checklist item"
-                >
-                  ×
-                </button>
-              </div>
-              <button
-                type="button"
-                class="btn btn-outline-primary btn-sm mb-3"
-                (click)="addTask(job)"
-                [disabled]="job.taskList?.length >= 100"
-              >
-                Add checklist item</button
-              ><button
-                type="submit"
-                class="btn btn-outline-primary"
-                [disabled]="!!savingJob || jobForm.invalid"
-              >
-                {{ savingJob === job.jobSlug ? 'Saving…' : 'Save job' }}
-              </button>
-            </fieldset>
-          </form>
+          <ng-container *ngIf="custSlug; else saveCustomerFirst">
+            <a *ngIf="!tcustomer?.isArchived" class="btn btn-outline-primary" routerLink="/job/new" [queryParams]="{customer: custSlug}">+ New job</a>
+            <a *ngFor="let job of jobsList" class="d-block mt-3" [routerLink]="['/job', job.jobSlug]">{{ job.name }} →</a>
+          </ng-container>
+          <ng-template #saveCustomerFirst><p>To create a customer and job together, use the New Job page.</p><a class="btn btn-outline-primary" routerLink="/job/new">+ New job</a></ng-template>
         </div>
       </div>
     </div>

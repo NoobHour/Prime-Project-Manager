@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, HostListener, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -12,15 +12,18 @@ import { firstValueFrom } from 'rxjs';
 export class EditorComponent implements OnInit {
   form: FormGroup;
   jobsList: any[] = [];
-  team: any[] = [];
+
   custSlug = '';
   tcustomer: any;
-  typedJob = '';
+
   error = '';
   busy = false;
-  savingJob = '';
-  addingJob = false;
+
+
   notice = '';
+  leavePrompt = false;
+  private savedForm = '';
+  private leaveDecision?: (discard: boolean) => void;
   /** Accepts Angular form, HTTP and routing services; initializes the customer editor. */
   constructor(
     private fb: FormBuilder,
@@ -40,15 +43,10 @@ export class EditorComponent implements OnInit {
       isArchived: [false],
       version: [null],
     });
+    this.savedForm = JSON.stringify(this.form.value);
   }
   /** Accepts no arguments; loads the current customer directly from the server. */
   async ngOnInit() {
-    try {
-      const members: any = await firstValueFrom(this.http.get('/api/team'));
-      this.team = members.listData;
-    } catch {
-      this.error = 'Could not load team members.';
-    }
     this.custSlug = this.route.snapshot.params['slug'] || '';
     if (this.custSlug) await this.loadCustomer();
   }
@@ -60,6 +58,7 @@ export class EditorComponent implements OnInit {
       );
       this.tcustomer = r.detailData;
       this.form.patchValue(this.tcustomer);
+      this.savedForm = JSON.stringify(this.form.value);
       this.jobsList = [];
       let total = 1;
       while (this.jobsList.length < total) {
@@ -75,7 +74,7 @@ export class EditorComponent implements OnInit {
       this.error = e.error?.message || 'Could not load customer.';
     }
   }
-  /** Accepts no arguments; saves customer fields and an optional first job, then opens the customer. */
+  /** Accepts no arguments; saves only customer fields and opens the customer; job creation uses its own page. */
   async submit() {
     if (this.form.invalid || this.busy) return;
     this.busy = true;
@@ -89,12 +88,8 @@ export class EditorComponent implements OnInit {
       );
       this.custSlug = r.data.slug;
       this.form.patchValue(r.data);
-      if (creating && this.typedJob.trim())
-        await firstValueFrom(
-          this.http.post(`/api/customers/${this.custSlug}/jobs`, {
-            name: this.typedJob,
-          }),
-        );
+      this.savedForm = JSON.stringify(this.form.value);
+      this.busy = false;
       await this.router.navigate(['/customer', this.custSlug]);
     } catch (e) {
       this.error = e.error?.message || 'Could not save customer.';
@@ -102,62 +97,29 @@ export class EditorComponent implements OnInit {
       this.busy = false;
     }
   }
-  /** Accepts no arguments; appends the new saved job without discarding unsaved customer or job fields. */
-  async addNewJob() {
-    if (this.addingJob || !this.typedJob.trim()) return;
-    this.addingJob = true;
-    this.error = '';
-    try {
-      const result = await firstValueFrom(
-        this.http.post<any>(`/api/customers/${this.custSlug}/jobs`, {
-          name: this.typedJob.trim(),
-        }),
-      );
-      this.typedJob = '';
-      this.jobsList = [...this.jobsList, result.data];
-      this.notice = 'Job added.';
-    } catch (e) {
-      this.error = e.error?.message || 'Could not add job.';
-    } finally {
-      this.addingJob = false;
-    }
+  /** Accepts no input; returns whether customer fields differ from their last confirmed save. */
+  get dirty() { return JSON.stringify(this.form.value) !== this.savedForm; }
+  /** Accepts no input; returns permission to leave, or a pending discard decision that protects customer edits. */
+  canLeave() {
+    if (this.busy) return false;
+    if (!this.dirty) return true;
+    if (this.leavePrompt) return false;
+    this.leavePrompt = true;
+    return new Promise<boolean>(
+      /** Accepts a promise resolver; stores it until the user decides whether to discard, returning nothing. */
+      (resolve) => { this.leaveDecision = resolve; },
+    );
   }
-  /** Accepts a job row; persists its title, scope and lifecycle status. */
-  async setJob(job: any) {
-    if (this.savingJob) return;
-    this.savingJob = job.jobSlug;
-    this.error = '';
-    this.notice = '';
-    try {
-      job.lane = job.isArchived
-        ? 'archived'
-        : job.isComplete
-          ? 'complete'
-          : job.isActive
-            ? 'active'
-            : 'planned';
-      const result = await firstValueFrom(
-        this.http.put<any>('/api/customers/jobs/' + job.jobSlug, job),
-      );
-      // Only the saved row receives server normalization and its new conflict-detection version.
-      Object.assign(job, result.data);
-      this.notice = 'Job saved.';
-    } catch (e) {
-      this.error = e.error?.message || 'Could not save job.';
-    } finally {
-      this.savingJob = '';
-    }
+  /** Accepts the discard decision; closes the prompt and resolves the pending navigation, returning nothing. */
+  resolveLeave(discard: boolean) {
+    this.leavePrompt = false;
+    this.leaveDecision?.(discard);
+    this.leaveDecision = undefined;
   }
-  /** Accepts a job; appends a uniquely identified checklist item for the user to name before saving. */
-  addTask(job: any) {
-    job.taskList = [
-      ...(job.taskList || []),
-      { id: crypto.randomUUID(), title: '', done: false },
-    ];
-  }
-  /** Accepts a job and item index; removes that unsaved checklist row from the editor. */
-  removeTask(job: any, index: number) {
-    job.taskList.splice(index, 1);
+  /** Accepts the unload event; requests the native warning for unsaved customer edits or a pending save. */
+  @HostListener('window:beforeunload', ['$event'])
+  beforeUnload(event: BeforeUnloadEvent) {
+    if (this.dirty || this.busy) { event.preventDefault(); event.returnValue = ''; }
   }
   /** Accepts a native file event; uploads a protected customer avatar and refreshes its version. */
   async uploadAvatar(event: Event) {
@@ -175,6 +137,8 @@ export class EditorComponent implements OnInit {
       );
       this.tcustomer = result.detailData;
       this.form.patchValue({ version: result.detailData.version });
+      // Uploading an avatar advances only the baseline version, preserving dirty contact fields.
+      this.savedForm = JSON.stringify({ ...JSON.parse(this.savedForm), version: result.detailData.version });
     } catch (e) {
       this.error = e.error?.message || 'Could not upload avatar.';
     } finally {

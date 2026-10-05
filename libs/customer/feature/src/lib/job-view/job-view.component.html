@@ -1,7 +1,7 @@
 <section class="job-page">
   <div class="leave-backdrop" *ngIf="leavePrompt">
     <section class="leave-dialog panel" role="alertdialog" aria-modal="true" aria-labelledby="leave-heading" aria-describedby="leave-description" cdkTrapFocus [cdkTrapFocusAutoCapture]="true" (keydown.escape)="resolveLeave(false)">
-      <h2 id="leave-heading">Unsaved changes</h2><p id="leave-description">Save your job or send your message before leaving, or discard these changes.</p>
+      <h2 id="leave-heading">Unsaved changes</h2><p id="leave-description">Save your work before leaving, or discard these changes.</p>
       <div class="customer-actions"><button type="button" class="btn btn-primary" (click)="resolveLeave(false)" cdkFocusInitial>Keep editing</button><button type="button" class="btn btn-outline-danger" (click)="resolveLeave(true)">Discard changes</button></div>
     </section>
   </div>
@@ -12,18 +12,18 @@
   </nav>
   <p *ngIf="loading" role="status">Loading job workspace…</p>
   <p *ngIf="error" role="alert" class="text-danger">{{ error }}</p>
-  <button *ngIf="error && !job && !loading" type="button" class="btn btn-outline-primary" (click)="load(slug)">Retry loading job</button>
-  <a *ngIf="!loading && !job" class="btn btn-outline-primary" routerLink="/jobs">Return to Job Board</a>
-  <ng-container *ngIf="job && !loading">
+  <button *ngIf="error && !loading && (creating ? !newReady : !job)" type="button" class="btn btn-outline-primary" (click)="load(slug)">Retry loading job</button>
+  <a *ngIf="!loading && !job && !creating" class="btn btn-outline-primary" routerLink="/jobs">Return to Job Board</a>
+  <ng-container *ngIf="(job || (creating && newReady)) && draft && !loading">
     <header class="job-heading">
-      <div><span class="eyebrow">JOB WORKSPACE</span><h1>{{ job.name }}</h1>
-        <p>{{ job.lane | titlecase }} · {{ job.priority | titlecase }} priority · {{ job.dueDate ? (job.dueDate | date: 'MMM d, yyyy' : 'UTC') : 'No due date' }}</p>
+      <div><span class="eyebrow">JOB WORKSPACE</span><h1>{{ creating ? 'New job' : job.name }}</h1>
+        <p *ngIf="!creating">{{ job.lane | titlecase }} · {{ job.priority | titlecase }} priority · {{ job.dueDate ? (job.dueDate | date: 'MMM d, yyyy' : 'UTC') : 'No due date' }}</p>
       </div>
-    </header>
-    <div class="job-layout">
+    <p *ngIf="creating">Plan the work and choose its customer. Save to open the job workspace.</p></header>
+    <form #jobForm="ngForm" class="job-layout" (ngSubmit)="save()">
       <section #details id="job-details" tabindex="-1" class="panel details-panel" aria-labelledby="details-heading">
         <h2 id="details-heading">Job details</h2>
-        <form #jobForm="ngForm" (ngSubmit)="save()">
+
           <fieldset [disabled]="saving">
             <label>Job title<input class="form-control" name="name" [(ngModel)]="draft.name" required maxlength="200" /></label>
             <div class="planning-fields">
@@ -45,30 +45,59 @@
             </div>
             <button type="button" class="btn btn-outline-primary btn-sm" (click)="addTask()" [disabled]="draft.taskList.length >= 100">+ Add checklist item</button>
             <div class="save-bar">
-              <button type="submit" class="btn btn-primary" [disabled]="jobForm.invalid || !validDraft || saving || !dirty">{{ saving ? 'Saving…' : 'Save job' }}</button>
-              <button type="button" class="btn btn-outline-primary" (click)="reload()">Reload / discard changes</button>
-              <span role="status">{{ notice || (dirty ? 'Unsaved changes' : 'All changes saved') }}</span>
+              <button type="submit" class="btn btn-primary" [disabled]="jobForm.invalid || !validDraft || !validCustomer || saving || (!creating && !dirty)">{{ saving ? 'Saving…' : creating ? (customerMode === 'new' ? 'Create customer & job' : 'Create job') : 'Save job' }}</button>
+              <button type="button" class="btn btn-outline-primary" *ngIf="!creating" (click)="reload()">Reload / discard changes</button>
+              <span role="status">{{ notice || (dirty ? 'Unsaved changes' : creating ? 'Not saved yet' : 'All changes saved') }}</span>
             </div>
           </fieldset>
-        </form>
+
       </section>
       <aside class="customer-sidebar">
-        <section class="panel customer-card" aria-labelledby="customer-heading">
+        <!-- The customer choice belongs to the same form, so its validation gates the single save. -->
+        <section *ngIf="creating" class="panel" aria-labelledby="choose-customer-heading">
+          <h2 id="choose-customer-heading">Customer</h2>
+          <fieldset [disabled]="saving">
+            <label>Customer option<select class="form-control" name="customerMode" [(ngModel)]="customerMode"><option value="existing">Existing customer</option><option value="new">Create a new customer</option></select></label>
+            <ng-container *ngIf="customerMode === 'existing'">
+              <label>Search customers<input class="form-control" type="search" name="customerSearch" [(ngModel)]="customerSearch" (ngModelChange)="searchCustomers()" placeholder="Search by customer name" /></label>
+              <p *ngIf="searchingCustomers" role="status">Finding customers…</p>
+              <p *ngIf="customerError" role="alert" class="text-danger">{{ customerError }}</p>
+              <button *ngIf="customerError" type="button" class="btn btn-outline-primary" (click)="searchCustomers()">Retry search</button>
+              <label>Attach to customer<select class="form-control" name="customerSlug" [ngModel]="customerSlug" (ngModelChange)="selectCustomer($event)" required>
+                <option value="">Choose a customer</option>
+                <option *ngIf="customer" [value]="customer.slug">{{ customer.name }} — {{ customer.email || customer.phone || customer.address || 'No contact details' }}</option>
+                <ng-container *ngFor="let choice of customerChoices"><option *ngIf="choice.slug !== customer?.slug" [value]="choice.slug">{{ choice.name }} — {{ choice.email || choice.phone || choice.address || 'No contact details' }}</option></ng-container>
+              </select></label>
+              <p *ngIf="!searchingCustomers && !customerChoices.length && !customerError">No customers found. Try another name or create a new customer.</p>
+              <small>Up to 100 matches. Refine the name to find a customer.</small>
+            </ng-container>
+            <ng-container *ngIf="customerMode === 'new'">
+              <label>Customer name<input class="form-control" name="customerName" [(ngModel)]="newCustomer.name" required maxlength="200" /></label>
+              <label>Phone<input class="form-control" name="customerPhone" [(ngModel)]="newCustomer.phone" maxlength="80" /></label>
+              <label>Email<input class="form-control" type="email" name="customerEmail" [(ngModel)]="newCustomer.email" email maxlength="254" /></label>
+              <label>Address<input class="form-control" name="customerAddress" [(ngModel)]="newCustomer.address" maxlength="500" /></label>
+              <label>Customer notes<textarea class="form-control" name="customerBody" [(ngModel)]="newCustomer.body" rows="4"></textarea></label>
+              <p>The customer and job will be saved together.</p>
+            </ng-container>
+          </fieldset>
+        </section>
+        <section *ngIf="customer && (!creating || customerMode === 'existing')" class="panel customer-card" aria-labelledby="customer-heading">
           <span class="eyebrow">CUSTOMER</span>
           <div class="customer-heading"><img *ngIf="customer.avatar" [src]="customer.avatar" alt="Customer avatar" /><h2 id="customer-heading">{{ customer.name }}</h2></div>
           <dl><dt>Phone</dt><dd><a *ngIf="customer.phone; else noPhone" [href]="'tel:'+customer.phone">{{ customer.phone }}</a><ng-template #noPhone>Not provided</ng-template></dd>
             <dt>Email</dt><dd><a *ngIf="customer.email; else noEmail" [href]="'mailto:'+customer.email">{{ customer.email }}</a><ng-template #noEmail>Not provided</ng-template></dd>
             <dt>Address</dt><dd>{{ customer.address || 'Not provided' }}</dd></dl>
           <div class="customer-notes" *ngIf="customer.body" [innerHTML]="customer.body"></div>
-          <div class="customer-actions"><a class="btn btn-outline-primary" [routerLink]="['/editor', customer.slug]">Edit customer</a><a [routerLink]="['/customer',customer.slug]">Customer overview →</a></div>
+          <div *ngIf="!creating" class="customer-actions"><a class="btn btn-outline-primary" [routerLink]="['/editor', customer.slug]">Edit customer</a><a [routerLink]="['/customer',customer.slug]">Customer overview →</a></div>
         </section>
-        <section class="panel" aria-labelledby="related-heading"><h2 id="related-heading">Other jobs for this customer</h2>
+        <section *ngIf="!creating" class="panel" aria-labelledby="related-heading"><h2 id="related-heading">Other jobs for this customer</h2>
           <p *ngIf="jobs.length <= 1">No other jobs yet.</p>
           <ng-container *ngFor="let other of jobs"><a *ngIf="other.jobSlug !== job.jobSlug" class="related-job" [routerLink]="['/job', other.jobSlug]"><strong>{{ other.name }}</strong><span>{{ other.lane | titlecase }} · {{ other.dueDate ? (other.dueDate | date:'MMM d':'UTC') : 'No due date' }}</span></a></ng-container>
         </section>
       </aside>
+    </form>
       <!-- Projected panels stay mounted so changing tabs preserves message, calendar and file drafts. -->
-      <div class="resources">
+      <div *ngIf="!creating" class="resources">
         <p-tabView label="Job resources">
           <p-tabPanel header="Job discussion">
             <section class="panel" aria-labelledby="discussion-heading"><h2 id="discussion-heading">Job discussion</h2><p>Updates, decisions and questions for this job. These messages also appear in the customer's combined feed.</p><view-comments #jobDiscussion [slug]="customer.slug" [jobSlug]="job.jobSlug" [jobs]="jobs"></view-comments></section>
@@ -81,7 +110,6 @@
           </p-tabPanel>
         </p-tabView>
       </div>
-    </div>
   </ng-container>
   </div>
 </section>

@@ -14,9 +14,9 @@
 .panel h2 { font-size: 1.3rem; margin-bottom: 1rem; }
 .panel h3 { font-size: 1.1rem; margin: 0; }
 .customer-sidebar { display: grid; min-width: 0; gap: 1.2rem; }
-.resources { grid-column: 1 / -1; min-width: 0; }
+.resources { margin-top: 1.2rem; min-width: 0; }
 fieldset { min-width: 0; border: 0; margin: 0; padding: 0; }
-.details-panel label { display: block; margin-bottom: 1rem; }
+.details-panel label, .customer-sidebar label { display: block; margin-bottom: 1rem; }
 .form-control { margin-top: .3rem; }
 .planning-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 1rem; }
 .checklist-heading { display: flex; flex-wrap: wrap; gap: .5rem; justify-content: space-between; margin: 1.25rem 0 .75rem; }

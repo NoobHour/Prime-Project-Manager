@@ -22,6 +22,8 @@ import { Like, Repository } from 'typeorm';
 import { randomUUID } from 'node:crypto';
 import {
   CustomerService,
+  Customer,
+  Job,
   JobService,
   CalendarService,
   CommentService,
@@ -347,7 +349,50 @@ export class CustomerApiHandlersController {
     if (!row) throw new NotFoundException();
     return { success: true, detailData: row };
   }
-  /** Accepts customer identity and job title; adds a job without duplicating customer JSON state. */
+  /** Accepts job form values; returns validated creation fields with consistent lifecycle flags. */
+  private async newJobFields(data: any) {
+    if (!data || typeof data !== 'object' || Array.isArray(data))
+      throw new BadRequestException('Enter job details.');
+    const lane = data.lane ?? 'planned';
+    if (!['planned', 'active', 'complete', 'archived'].includes(lane))
+      throw new BadRequestException('Invalid job status.');
+    return {
+      name: text(data.name, 'Job name', 200, true),
+      body: richText(data.body),
+      ...(await this.planning(data)),
+      lane,
+      isActive: lane === 'active',
+      isComplete: lane === 'complete',
+      isArchived: lane === 'archived',
+    };
+  }
+  /** Accepts an authenticated author, job fields and exactly one customer choice; returns the job after saving both records atomically. */
+  @Post('jobs') async createJobWorkspace(@Req() req: any, @Body() data: any) {
+    const customerSlug = text(data.customerSlug ?? '', 'Customer', 100);
+    const hasNewCustomer = data.customer !== undefined;
+    if (!!customerSlug === hasNewCustomer)
+      throw new BadRequestException('Choose an existing customer or enter a new customer.');
+    if (hasNewCustomer && (!data.customer || typeof data.customer !== 'object' || Array.isArray(data.customer)))
+      throw new BadRequestException('Enter customer details.');
+    const fields = await this.newJobFields(data.job);
+    const customerFields = hasNewCustomer ? this.customerFields({ ...data.customer, isActive: true, isArchived: false }) : null;
+    // A transaction prevents orphan customers if saving the associated job fails.
+    return this.jobs.repository.manager.transaction(
+      /** Accepts the transaction manager; returns the saved job, rolling back both inserts on failure. */
+      async (manager) => {
+        const customers = manager.getRepository(Customer);
+        const jobs = manager.getRepository(Job);
+        const customer = customerFields
+          ? await customers.save(customers.create({ ...customerFields, slug: randomUUID(), authorId: req.user.id }))
+          : await customers.findOne({ where: { slug: customerSlug } });
+        if (!customer) throw new NotFoundException('Customer not found.');
+        if (customer.isArchived) throw new ConflictException('Restore the customer before adding work.');
+        const job = await jobs.save(jobs.create({ ...fields, customerSlug: customer.slug, jobSlug: randomUUID() }));
+        return { success: true, data: job };
+      },
+    );
+  }
+  /** Accepts customer identity and job fields; returns a saved job without duplicating customer JSON state. */
   @Post('customers/:slug/jobs') async createJob(
     @Param('slug') customerSlug: string,
     @Body() data: any,
@@ -361,10 +406,7 @@ export class CustomerApiHandlersController {
         this.jobs.repository.create({
           customerSlug,
           jobSlug: randomUUID(),
-          name: text(data.name, 'Job name', 200, true),
-          ...(await this.planning(data)),
-          isActive: true,
-          lane: 'planned',
+          ...(await this.newJobFields(data)),
         }),
       ),
     };

@@ -1,4 +1,6 @@
-/* Fieldsets freeze only the saving job; sibling drafts remain editable. */
+/* Keep the customer form and its discard prompt within the app's dark palette. */
+.leave-backdrop { position: fixed; inset: 0; z-index: 1200; display: grid; place-items: center; padding: 1rem; background: #111a; }
+.leave-dialog { width: 100%; max-width: 440px; padding: 1.25rem; background: #2a323d; border: 1px solid #465366; border-radius: .5rem; }
 fieldset {
   min-width: 0;
   border: 0;

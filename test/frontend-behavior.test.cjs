@@ -248,51 +248,90 @@ test('file tags are normalized, deduplicated and edited in a separate draft', ()
   assert.deepEqual(Array.from(files.editing.tags), ['inspection']);
 });
 
-/** Accepts no input; verifies saving and adding jobs preserve unrelated drafts and reject duplicate submissions. */
-test('editor job saves preserve customer and sibling drafts', async () => {
+/** Accepts no input; verifies the customer editor saves contact fields only and protects a draft before opening a job. */
+test('customer editor saves only the customer and guards unsaved navigation', async () => {
   const { EditorComponent } = component('editor/editor.component.ts');
-  const pending = new Subject();
-  let puts = 0;
-  const http = {
-    /** Accepts a job write; returns a controlled pending response. */
-    put() {
-      puts++;
-      return pending;
-    },
-    /** Accepts a new job request; returns its persisted row. */
-    post() {
-      return of({ data: { jobSlug: 'new', name: 'New work', version: 1 } });
-    },
-    /** Accepts any unexpected reload; fails because reloading discards drafts. */
-    get() {
-      throw new Error('Unexpected full editor reload');
-    },
-  };
-  const editor = new EditorComponent({ group }, http, {}, {});
+  const writes = [];
+  const editor = new EditorComponent({ group }, {
+    /** Accepts the customer URL and fields; returns the saved customer without any job writes. */
+    put(url, data) { writes.push(url); return of({ data: { ...data, slug: 'customer', version: 2 } }); },
+  }, {}, {
+    /** Accepts the destination; returns successful navigation after the draft baseline updates. */
+    async navigate() { assert.equal(editor.canLeave(), true); return true; },
+  });
   editor.custSlug = 'customer';
-  editor.form.value.name = 'Unsaved customer';
-  const job = {
-    jobSlug: 'one',
-    name: 'Saved work',
-    version: 2,
-    isActive: true,
-  };
-  const sibling = { jobSlug: 'two', name: 'Unsaved sibling' };
-  editor.jobsList = [job, sibling];
-  const saving = editor.setJob(job);
-  await editor.setJob(job);
-  assert.equal(puts, 1);
-  pending.next({ data: { ...job, version: 3 } });
-  pending.complete();
-  await saving;
-  assert.equal(job.version, 3);
-  assert.equal(editor.form.value.name, 'Unsaved customer');
-  assert.equal(editor.jobsList[1], sibling);
-  editor.typedJob = 'New work';
-  await editor.addNewJob();
-  assert.equal(editor.jobsList.length, 3);
-  assert.equal(editor.form.value.name, 'Unsaved customer');
-  assert.equal(editor.savingJob, '');
+  editor.form.value.name = 'Changed contact';
+  const decision = editor.canLeave();
+  assert.equal(editor.leavePrompt, true);
+  editor.resolveLeave(false);
+  assert.equal(await decision, false);
+  await editor.submit();
+  assert.deepEqual(writes, ['/api/customers/customer']);
+  assert.equal(editor.dirty, false);
+});
+
+/** Accepts no input; verifies atomic creation payloads, failed-save draft retention and duplicate-submit protection. */
+test('new job workspace preserves customer and job drafts until creation succeeds', async () => {
+  const { JobViewComponent } = component('job-view/job-view.component.ts');
+  let pending = new Subject();
+  const writes = [];
+  const visits = [];
+  const view = new JobViewComponent({
+    /** Accepts the creation endpoint and payload; returns a controlled server response. */
+    post(url, data) { writes.push({ url, data }); return pending; },
+  }, {}, {
+    /** Accepts the saved job route; records it and confirms navigation is not blocked by the saved draft. */
+    async navigate(route) { visits.push(route); assert.equal(view.canLeave(), true); return true; },
+  });
+  view.creating = view.newReady = true;
+  view.draft = { name: 'New roof', body: '<p>Scope</p>', taskList: [], lane: 'active' };
+  view.customerMode = 'new';
+  view.newCustomer.name = 'New customer';
+  const first = view.save();
+  await view.save();
+  assert.equal(writes.length, 1);
+  assert.equal(writes[0].url, '/api/jobs');
+  assert.equal(writes[0].data.customer.name, 'New customer');
+  assert.equal(writes[0].data.customerSlug, undefined);
+  pending.error({ error: { message: 'Try again' } });
+  await first;
+  assert.equal(view.draft.name, 'New roof');
+  assert.equal(view.newCustomer.name, 'New customer');
+  assert.equal(view.dirty, true);
+  assert.equal(visits.length, 0);
+  pending = new Subject();
+  view.customerMode = 'existing';
+  view.customerSlug = 'selected';
+  view.customer = { slug: 'selected', name: 'Existing customer', isArchived: false };
+  const second = view.save();
+  assert.equal(writes[1].data.customerSlug, 'selected');
+  assert.equal(writes[1].data.customer, undefined);
+  pending.next({ data: { jobSlug: 'saved-job' } });
+  await second;
+  assert.deepEqual(Array.from(visits[0]), ['/job', 'saved-job']);
+  assert.equal(view.dirty, false);
+});
+
+/** Accepts no input; verifies customer search responses cannot replace a newer result or silently change the selection. */
+test('new job customer search ignores stale results', async () => {
+  const { JobViewComponent } = component('job-view/job-view.component.ts');
+  const old = new Subject();
+  const recent = new Subject();
+  const view = new JobViewComponent({
+    /** Accepts a search URL and parameters; returns the matching pending response. */
+    get(url, options) { return options.params.search === 'old' ? old : recent; },
+  }, {}, {});
+  view.customerSearch = 'old';
+  const first = view.searchCustomers();
+  view.customerSearch = 'recent';
+  const second = view.searchCustomers();
+  recent.next({ listData: [{ slug: 'recent', name: 'Recent customer' }] });
+  await second;
+  view.selectCustomer('recent');
+  old.next({ listData: [{ slug: 'old', name: 'Old customer' }] });
+  await first;
+  assert.equal(view.customerChoices[0].slug, 'recent');
+  assert.equal(view.customerSlug, 'recent');
 });
 
 /** Accepts no input; verifies job conflicts keep the draft, successful saves advance versions, and duplicate writes are blocked. */
@@ -338,18 +377,18 @@ test('job navigation ignores stale detail reads', async () => {
     /** Accepts a detail/context URL; returns one delayed job and immediately available newer context. */
     get(url) {
       if (url.endsWith('/old')) return older;
-      if (url.endsWith('/new')) return of({ detailData: { jobSlug: 'new', customerSlug: 'c', name: 'New', lane: 'planned', taskList: [] } });
+      if (url.endsWith('/newer-job')) return of({ detailData: { jobSlug: 'newer-job', customerSlug: 'c', name: 'New', lane: 'planned', taskList: [] } });
       if (url === '/api/team') return of({ listData: [] });
       if (url.endsWith('/jobs')) return of({ listData: [], total: 1 });
       return of({ detailData: { slug: 'c', name: 'Customer' } });
     },
   }, {});
   const slow = view.load('old');
-  await view.load('new');
+  await view.load('newer-job');
   older.next({ detailData: { jobSlug: 'old', customerSlug: 'c' } });
   older.complete();
   await slow;
-  assert.equal(view.job.jobSlug, 'new');
+  assert.equal(view.job.jobSlug, 'newer-job');
   assert.equal(view.draft.name, 'New');
   assert.equal(view.loading, false);
 });

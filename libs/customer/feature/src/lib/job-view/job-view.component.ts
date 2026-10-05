@@ -1,6 +1,6 @@
 import { Component, HostListener, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { firstValueFrom, Subscription } from 'rxjs';
 
 @Component({
@@ -26,9 +26,20 @@ export class JobViewComponent implements OnInit, OnDestroy {
   private routeChanges?: Subscription;
   private requestId = 0;
   private savedDraft = '';
+  creating = false;
+  newReady = false;
+  customerMode = 'existing';
+  customerSlug = '';
+  customerSearch = '';
+  customerChoices: any[] = [];
+  searchingCustomers = false;
+  customerError = '';
+  newCustomer = { name: '', phone: '', email: '', address: '', body: '' };
+  private customerRequest = 0;
+  private savedCustomer = '';
 
   /** Accepts HTTP and route services; initializes a job editor that keeps server state separate from its draft. */
-  constructor(private http: HttpClient, private route: ActivatedRoute) {}
+  constructor(private http: HttpClient, private route: ActivatedRoute, private router: Router) {}
 
   /** Accepts no input; loads the job on initial navigation and when opening another job from this page. */
   ngOnInit() {
@@ -38,10 +49,12 @@ export class JobViewComponent implements OnInit, OnDestroy {
   ngOnDestroy() {
     this.routeChanges?.unsubscribe();
     this.requestId++;
+    this.customerRequest++;
   }
   /** Accepts no input; returns whether the editable values differ from the last confirmed save. */
   get dirty() {
-    return !!this.draft && JSON.stringify(this.draft) !== this.savedDraft;
+    return !!this.draft && (JSON.stringify(this.draft) !== this.savedDraft ||
+      (this.creating && JSON.stringify([this.customerMode, this.customerSlug, this.newCustomer]) !== this.savedCustomer));
   }
   /** Accepts no input; returns whether job edits or unsent messages need protection before navigation. */
   get unsaved() { return this.dirty || !!this.discussion?.hasDraft; }
@@ -60,6 +73,8 @@ export class JobViewComponent implements OnInit, OnDestroy {
   }
   /** Accepts a job slug; loads its customer, related jobs and enabled staff, ignoring superseded requests. */
   async load(slug: string) {
+    if (slug === 'new') { await this.loadNew(); return; }
+    this.creating = false;
     this.slug = slug;
     const request = ++this.requestId;
     this.loading = true;
@@ -94,6 +109,85 @@ export class JobViewComponent implements OnInit, OnDestroy {
       if (request === this.requestId) this.loading = false;
     }
   }
+  /** Accepts no input; initializes a new job and optional preselected customer without writing records. */
+  async loadNew() {
+    const request = ++this.requestId;
+    this.creating = true;
+    this.newReady = false;
+    this.slug = 'new';
+    this.loading = true;
+    this.error = this.notice = '';
+    this.job = this.customer = null;
+    this.jobs = [];
+    this.customerMode = 'existing';
+    this.customerSlug = this.route.snapshot.queryParamMap.get('customer') || '';
+    this.newCustomer = { name: '', phone: '', email: '', address: '', body: '' };
+    this.draft = { name: '', body: '', lane: 'planned', assigneeId: '', dueDate: '', priority: 'normal', taskList: [] };
+    this.savedDraft = JSON.stringify(this.draft);
+    this.savedCustomer = JSON.stringify([this.customerMode, this.customerSlug, this.newCustomer]);
+    try {
+      const team = await firstValueFrom(this.http.get<any>('/api/team'));
+      if (request !== this.requestId) return;
+      this.team = team.listData;
+      if (this.customerSlug) {
+        const response = await firstValueFrom(this.http.get<any>(`/api/customers/${encodeURIComponent(this.customerSlug)}`));
+        if (request !== this.requestId) return;
+        if (response.detailData.isArchived) throw new Error('archived');
+        this.customer = response.detailData;
+      }
+      this.newReady = true;
+      await this.searchCustomers();
+    } catch {
+      if (request === this.requestId) this.error = 'Could not load the new job form. Check that the customer is available and retry.';
+    } finally {
+      if (request === this.requestId) this.loading = false;
+    }
+  }
+  /** Accepts no input; returns whether a selected customer or a named new customer can receive this job. */
+  get validCustomer() {
+    return !this.creating || (this.customerMode === 'new'
+      ? !!this.newCustomer.name.trim()
+      : !!this.customer && this.customer.slug === this.customerSlug && !this.customer.isArchived);
+  }
+  /** Accepts no input; returns matching nonarchived customers, ignoring older searches so selection never changes silently. */
+  async searchCustomers() {
+    const request = ++this.customerRequest;
+    this.searchingCustomers = true;
+    this.customerError = '';
+    try {
+      const result = await firstValueFrom(this.http.get<any>('/api/customers', {
+        params: { search: this.customerSearch, isArchived: 'false', limit: 100 },
+      }));
+      if (request === this.customerRequest) this.customerChoices = result.listData;
+    } catch {
+      if (request === this.customerRequest) this.customerError = 'Could not find customers. Try searching again.';
+    } finally {
+      if (request === this.customerRequest) this.searchingCustomers = false;
+    }
+  }
+  /** Accepts a customer slug from the search results; selects its read-only details and returns nothing. */
+  selectCustomer(slug: string) {
+    this.customerSlug = slug;
+    this.customer = this.customerChoices.find((choice) => choice.slug === slug) || (this.customer?.slug === slug ? this.customer : null);
+  }
+  /** Accepts no input; creates the job and optional customer together, then opens the saved job without a draft-discard prompt. */
+  async create() {
+    if (this.saving || !this.validDraft || !this.validCustomer || this.loading || !this.newReady) return;
+    this.saving = true;
+    this.error = '';
+    try {
+      const result = await firstValueFrom(this.http.post<any>('/api/jobs', {
+        job: this.draft,
+        ...(this.customerMode === 'new' ? { customer: this.newCustomer } : { customerSlug: this.customerSlug }),
+      }));
+      this.savedDraft = JSON.stringify(this.draft);
+      this.savedCustomer = JSON.stringify([this.customerMode, this.customerSlug, this.newCustomer]);
+      this.saving = false;
+      await this.router.navigate(['/job', result.data.jobSlug]);
+    } catch (e: any) {
+      this.error = e.error?.message || 'Unable to create this job. Your changes are still here.';
+    } finally { this.saving = false; }
+  }
   /** Accepts no input; restores editable fields from the last confirmed job, including a separate checklist copy. */
   resetDraft() {
     this.draft = {
@@ -109,6 +203,7 @@ export class JobViewComponent implements OnInit, OnDestroy {
   }
   /** Accepts no input; saves only this job with its version, preserving the draft on validation or conflict failure. */
   async save() {
+    if (this.creating) { await this.create(); return; }
     if (this.saving || !this.validDraft) return;
     this.saving = true;
     this.error = this.notice = '';

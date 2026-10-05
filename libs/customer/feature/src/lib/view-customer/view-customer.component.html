@@ -121,7 +121,7 @@
               </div>
 
               <div class="p-col-12">
-                <div class="customer-actions">
+                <div class="customer-actions"><a *ngIf="customer && !customer.isArchived" class="btn btn-outline-primary" routerLink="/job/new" [queryParams]="{customer: customer.slug}">+ New job</a>
                   <mgmt-customer-author
                     [customer]="customer"
                     [currentUser]="userService?.userInfo"
@@ -158,7 +158,7 @@
             <a
               class="btn btn-outline-primary"
               [routerLink]="['/editor', customer?.slug]"
-              >Edit customer & jobs</a
+              >Edit customer</a
             >
           </div></p-tabPanel
         >

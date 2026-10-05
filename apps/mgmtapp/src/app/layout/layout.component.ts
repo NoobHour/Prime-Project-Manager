@@ -36,6 +36,7 @@ export class LayoutComponent {
     this.items = [
       { label: 'Home', icon: 'pi pi-fw pi-home', routerLink: '/' },
       { label: 'Team', icon: 'pi pi-users', routerLink: '/team' },
+      { label: 'New Job', routerLink: '/job/new', icon: 'pi pi-plus' },
       { label: 'Job Board', routerLink: '/jobs', icon: 'pi pi-fw pi-calendar' },
       {
         label: 'New Customer',
