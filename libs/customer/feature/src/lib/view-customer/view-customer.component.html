@@ -9,7 +9,8 @@
       <a class="btn btn-outline-primary" [routerLink]="['/editor',customer.slug]">{{ customer.isArchived ? 'Edit / restore customer' : 'Edit customer' }}</a>
       <button *ngIf="!customer.isArchived" type="button" class="btn btn-outline-danger" [disabled]="busy" (click)="delete()">Archive customer</button>
     </div>
-    <details class="customer-contact"><summary>Contact details</summary>
+    <!-- Contact information is visible on arrival and can still be collapsed. -->
+    <details class="customer-contact" open><summary>Contact details</summary>
       <dl><dt>Phone</dt><dd><a *ngIf="customer.phone" [href]="'tel:'+customer.phone">{{ customer.phone }}</a><span *ngIf="!customer.phone">Not provided</span></dd><dt>Email</dt><dd><a *ngIf="customer.email" [href]="'mailto:'+customer.email">{{ customer.email }}</a><span *ngIf="!customer.email">Not provided</span></dd><dt>Address</dt><dd>{{ customer.address || 'Not provided' }}</dd></dl>
       <div *ngIf="customer.body" [innerHTML]="customer.body"></div>
     </details>

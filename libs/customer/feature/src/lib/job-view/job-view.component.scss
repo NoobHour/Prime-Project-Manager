@@ -35,3 +35,14 @@ dd { margin: .2rem 0 0; }
 .related-job span { display: block; color: #c4cdd8; font-size: .9rem; margin-top: .3rem; }
 @media (max-width: 900px) { .job-layout { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 550px) { .job-page { padding: .8rem; } .panel { padding: .9rem; } .planning-fields { grid-template-columns: minmax(0, 1fr); } .job-heading h1 { font-size: 1.6rem; } }
+
+/* Saved details wrap on phones; hidden editors never occupy a grid column. */
+[hidden] { display: none !important; }
+.workspace-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .8rem; margin-bottom: .8rem; }
+.saved-planning { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 1rem; margin-bottom: 1.5rem; }
+.saved-scope { margin-top: .75rem; overflow-wrap: anywhere; }
+.saved-checklist { list-style: none; padding: 0; margin: 0; }
+.saved-checklist li { display: flex; align-items: baseline; gap: .8rem; padding: .6rem 0; border-bottom: 1px solid #465366; overflow-wrap: anywhere; }
+.task-state { flex: 0 0 5rem; color: #c4cdd8; font-size: .85rem; }
+.task-complete .task-state { color: #9ce0bd; }
+@media (max-width: 550px) { .saved-planning { grid-template-columns: minmax(0, 1fr); } }

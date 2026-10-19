@@ -95,6 +95,11 @@ export class JobViewComponent implements OnInit, OnDestroy {
     const tasks = this.draft?.taskList || [];
     return `${tasks.filter((task) => task.done).length} of ${tasks.length} complete`;
   }
+  /** Accepts no input; returns confirmed checklist progress, excluding unsaved edits. */
+  get savedProgress() {
+    const tasks = this.job?.taskList || [];
+    return `${tasks.filter((task) => task.done).length} of ${tasks.length} complete`;
+  }
   /** Accepts no input; returns the persisted owner's display name for the compact summary. */
   get ownerName() { return this.team.find((member) => member.id === this.job?.assigneeId)?.username || (this.job?.assigneeId ? 'Former team member' : 'Unassigned'); }
   /** Accepts no input; returns whether the stored owner is disabled or otherwise absent from the enabled staff list. */

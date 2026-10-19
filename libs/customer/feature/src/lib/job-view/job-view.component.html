@@ -20,9 +20,32 @@
         <p *ngIf="!creating">{{ job.lane | titlecase }} · {{ ownerName }} · {{ job.priority | titlecase }} priority · {{ job.dueDate ? (job.dueDate | date: 'MMM d, yyyy' : 'UTC') : 'No due date' }}</p>
       </div>
     <p *ngIf="creating">Plan the work and choose its customer. Save to open the job workspace.</p></header>
-    <div *ngIf="!creating" class="workspace-actions"><button class="btn btn-outline-primary" type="button" [attr.aria-expanded]="detailsOpen" aria-controls="job-editor" (click)="detailsOpen=!detailsOpen">{{ detailsOpen ? 'Hide details' : 'Edit job details' }}{{ dirty ? ' · Unsaved' : '' }}</button><a *ngIf="customer?.phone" [href]="'tel:'+customer.phone">Call customer</a></div>
-    <section *ngIf="creating && previewName" class="panel"><h2>Preview: {{ previewName }}</h2><p>Review scope and steps below. Choose the customer or Internal project, owner and deadline deliberately. Conversations, files and appointments are excluded.</p><div *ngIf="dueOffset !== null"><label>Start date<input type="date" class="form-control" [(ngModel)]="startDate" /></label><button type="button" class="btn btn-outline-primary" [disabled]="!startDate" (click)="applyDeadline()">Set deadline {{ dueOffset }} days after start</button></div></section><div *ngIf="!creating" class="workspace-actions"><a class="btn btn-outline-primary" routerLink="/job/new" [queryParams]="{duplicate:job.jobSlug}">Duplicate with preview</a><button type="button" class="btn btn-outline-primary" [disabled]="followingBusy" [attr.aria-pressed]="following" (click)="toggleFollow()">{{ following ? 'Following updates' : 'Follow updates' }}</button></div><form id="job-editor" [hidden]="!creating && !detailsOpen" #jobForm="ngForm" class="job-layout" (ngSubmit)="save()">
-      <section #details id="job-details" tabindex="-1" class="panel details-panel" aria-labelledby="details-heading">
+    <div *ngIf="!creating" class="workspace-actions"><button class="btn btn-outline-primary" type="button" [attr.aria-expanded]="detailsOpen" aria-controls="job-details" [disabled]="saving" (click)="detailsOpen=!detailsOpen">{{ detailsOpen ? 'Close editor' : 'Edit job details' }}{{ dirty ? ' · Unsaved' : '' }}</button><a *ngIf="customer?.phone" [href]="'tel:'+customer.phone">Call customer</a></div>
+    <section *ngIf="creating && previewName" class="panel"><h2>Preview: {{ previewName }}</h2><p>Review scope and steps below. Choose the customer or Internal project, owner and deadline deliberately. Conversations, files and appointments are excluded.</p><div *ngIf="dueOffset !== null"><label>Start date<input type="date" class="form-control" [(ngModel)]="startDate" /></label><button type="button" class="btn btn-outline-primary" [disabled]="!startDate" (click)="applyDeadline()">Set deadline {{ dueOffset }} days after start</button></div></section><div *ngIf="!creating" class="workspace-actions"><a class="btn btn-outline-primary" routerLink="/job/new" [queryParams]="{duplicate:job.jobSlug}">Duplicate with preview</a><button type="button" class="btn btn-outline-primary" [disabled]="followingBusy" [attr.aria-pressed]="following" (click)="toggleFollow()">{{ following ? 'Following updates' : 'Follow updates' }}</button></div><form id="job-editor" #jobForm="ngForm" class="job-layout" (ngSubmit)="save()">
+      <!-- Read confirmed values independently of the mounted draft editor. -->
+      <section *ngIf="!creating && !detailsOpen" class="panel saved-details" aria-labelledby="saved-details-heading">
+        <h2 id="saved-details-heading">Job details</h2>
+        <p *ngIf="notice" role="status">{{ notice }}</p>
+        <p *ngIf="dirty" role="status">Showing saved details. Your unsaved changes are kept in the editor.</p>
+        <dl class="saved-planning">
+          <div><dt>Status</dt><dd>{{ job.lane | titlecase }}</dd></div>
+          <div><dt>Owner</dt><dd>{{ ownerName }}</dd></div>
+          <div><dt>Priority</dt><dd>{{ job.priority | titlecase }}</dd></div>
+          <div><dt>Due date</dt><dd>{{ job.dueDate ? (job.dueDate | date:'MMM d, yyyy':'UTC') : 'No due date' }}</dd></div>
+          <div><dt>Project type</dt><dd>{{ customer ? 'Customer job' : 'Internal project' }}</dd></div>
+          <div><dt>Project labels</dt><dd>{{ job.labels?.length ? job.labels.join(', ') : 'No labels' }}</dd></div>
+        </dl>
+        <h3>Scope &amp; notes</h3>
+        <div class="saved-scope" *ngIf="job.body; else noScope" [innerHTML]="job.body"></div>
+        <ng-template #noScope><p>No scope or notes added yet.</p></ng-template>
+        <div class="checklist-heading"><h3>Checklist</h3><span>{{ savedProgress }}</span></div>
+        <p *ngIf="!job.taskList?.length">No checklist items added yet.</p>
+        <ul class="saved-checklist" *ngIf="job.taskList?.length">
+          <li *ngFor="let task of job.taskList" [class.task-complete]="task.done"><span class="task-state">{{ task.done ? 'Complete' : 'To do' }}</span><span>{{ task.title }}</span></li>
+        </ul>
+      </section>
+      <!-- Hide only the editor so draft fields survive and customer context stays visible. -->
+      <section [hidden]="!creating && !detailsOpen" #details id="job-details" tabindex="-1" class="panel details-panel" aria-labelledby="details-heading">
         <h2 id="details-heading">Job details</h2>
 
           <fieldset [disabled]="saving">
