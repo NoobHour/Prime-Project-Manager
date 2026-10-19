@@ -27,6 +27,8 @@ function component(relative) {
   const exports = {};
   /** Accepts an import ID; returns the real reactive primitives or minimal Angular wiring. */
   function load(id) {
+    if (id.endsWith('/editor-state')) return component('editor-state.ts');
+    if (id.endsWith('/workspace-time')) return component('../../../../shared/common/src/lib/workspace-time.ts');
     if (id === 'rxjs') return require(id);
     if (id === '@angular/core')
       return { Component: decorator, NgModule: decorator, Input: decorator, Output: decorator, HostListener: decorator, ViewChild: decorator, ContentChildren: decorator, EventEmitter: class {
@@ -63,6 +65,7 @@ function component(relative) {
       setInterval,
       clearInterval,
       document: { hidden: false },
+      confirm: () => false,
       crypto: require('node:crypto').webcrypto,
     },
     { filename },
@@ -543,9 +546,52 @@ test('calendar pagination terminates on an empty page', async () => {
     {},
     { group },
   );
+  calendar.timezone = 'UTC';
+  calendar.route = { snapshot: {} };
   await calendar.fetchEvents();
   assert.equal(reads, 1);
   assert.equal(calendar.loading, false);
+});
+
+/** Accepts no input; verifies unsaved message replacements/cancels and pending writes preserve the original edit. */
+test('discussion edit replacement and cancel protect changed message text', () => {
+  const { ViewCommentsComponent } = component('view-comments/view-comments.component.ts');
+  const board = new ViewCommentsComponent({}, {}, {}, {}, { group }, {});
+  board.commentForm.value.body = '<p>Unsent original</p>';
+  board.edit({ id: 'one', body: '<p>Saved</p>' });
+  board.commentForm.value.body = '<p>Changed</p>';
+  board.edit({ id: 'two', body: '<p>Other</p>' });
+  board.cancelEdit();
+  assert.equal(board.editing.id, 'one');
+  assert.equal(board.commentForm.value.body, '<p>Changed</p>');
+  board.busy = true;
+  board.commentForm.value.body = '<p>Saved</p>';
+  board.cancelEdit();
+  assert.equal(board.editing.id, 'one');
+  board.busy = false;
+  board.cancelEdit();
+  assert.equal(board.commentForm.value.body, '<p>Unsent original</p>');
+});
+
+/** Accepts no input; verifies calendar and file replacement/cancel retain changed drafts and reject pending work. */
+test('resource editors retain changed drafts when discard is declined', () => {
+  const { CustomerCalendarComponent } = component('calendar/calendar.component.ts');
+  const calendar = new CustomerCalendarComponent({}, {}, { group });
+  calendar.form.value.subject = 'Unsent appointment';
+  calendar.cancel();
+  calendar.eventClicked({ meta: { subject: 'Another appointment' } });
+  assert.equal(calendar.form.value.subject, 'Unsent appointment');
+  calendar.busy = true;
+  calendar.addAppointment();
+  assert.equal(calendar.form.value.subject, 'Unsent appointment');
+  const { FileUtilComponent } = component('file-util/file-util.component.ts');
+  const files = new FileUtilComponent({}, {});
+  files.edit({ id: 'one', name: 'Original', tags: [] });
+  files.editing.name = 'Changed';
+  files.edit({ id: 'two', name: 'Other', tags: [] });
+  files.cancelEdit();
+  assert.equal(files.editing.id, 'one');
+  assert.equal(files.editing.name, 'Changed');
 });
 
 /** Accepts no input; verifies newer customer searches win races and failures preserve the confirmed page. */

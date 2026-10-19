@@ -2,6 +2,8 @@ import { Component, HostListener, OnDestroy, OnInit, ViewChild } from '@angular/
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
 import { firstValueFrom, Subscription } from 'rxjs';
+import { EditorState, editorWork } from '../editor-state';
+import { shiftDate } from '@mgmt/shared/common/src/lib/workspace-time';
 
 @Component({
   standalone: false,
@@ -11,6 +13,10 @@ import { firstValueFrom, Subscription } from 'rxjs';
 })
 export class JobViewComponent implements OnInit, OnDestroy {
   @ViewChild('jobDiscussion') discussion?: { hasDraft: boolean; busy: boolean };
+  @ViewChild('jobCalendar') calendar?: EditorState;
+  @ViewChild('jobFiles') files?: EditorState;
+  /** Accepts no input; aggregates mounted resource editors without changing their drafts. */
+  get resourceWork() { return editorWork([this.discussion, this.calendar, this.files]); }
   job: any;
   draft: any;
   customer: any;
@@ -28,6 +34,18 @@ export class JobViewComponent implements OnInit, OnDestroy {
   private savedDraft = '';
   creating = false;
   newReady = false;
+  detailsOpen = false;
+  resourceIndex = 0;
+  returnUrl = '/jobs';
+  private queryChanges?: Subscription;
+  labelsText = '';
+  previewName = '';
+  startDate = '';
+  dueOffset: number | null = null;
+  history: any[] = [];
+  historyTotal = 0;
+  following = false;
+  followingBusy = false;
   customerMode = 'existing';
   customerSlug = '';
   customerSearch = '';
@@ -43,21 +61,31 @@ export class JobViewComponent implements OnInit, OnDestroy {
 
   /** Accepts no input; loads the job on initial navigation and when opening another job from this page. */
   ngOnInit() {
+    this.queryChanges = this.route.queryParamMap.subscribe((params) => {
+      this.resourceIndex = Math.max(0, ['discussion', 'calendar', 'files'].indexOf(params.get('resource') || 'discussion'));
+      const returnTo = params.get('returnTo') || '';
+      this.returnUrl = /^\/(jobs|completed)(\?|$)/.test(returnTo) ? returnTo : '/jobs';
+    });
     this.routeChanges = this.route.paramMap.subscribe((params) => this.load(params.get('jobSlug') || ''));
+  }
+  /** Accepts a resource tab index; saves a shareable location without replacing any mounted editor. */
+  selectResource(index: number) {
+    void this.router.navigate([], { relativeTo: this.route, queryParams: { resource: ['discussion', 'calendar', 'files'][index] }, queryParamsHandling: 'merge', replaceUrl: true });
   }
   /** Accepts no input; releases route subscriptions and prevents late reads from replacing another page's state. */
   ngOnDestroy() {
     this.routeChanges?.unsubscribe();
+    this.queryChanges?.unsubscribe();
     this.requestId++;
     this.customerRequest++;
   }
   /** Accepts no input; returns whether the editable values differ from the last confirmed save. */
   get dirty() {
-    return !!this.draft && (JSON.stringify(this.draft) !== this.savedDraft ||
+    return !!this.draft && (JSON.stringify(this.draft) !== this.savedDraft || this.labelsText !== (this.draft.labels || []).join(', ') ||
       (this.creating && JSON.stringify([this.customerMode, this.customerSlug, this.newCustomer]) !== this.savedCustomer));
   }
   /** Accepts no input; returns whether job edits or unsent messages need protection before navigation. */
-  get unsaved() { return this.dirty || !!this.discussion?.hasDraft; }
+  get unsaved() { return this.dirty || this.resourceWork.dirty; }
   /** Accepts no input; returns whether the title and every checklist row contain meaningful text before saving. */
   get validDraft() {
     return !!this.draft?.name?.trim() && this.draft.taskList.every((task) => task.title.trim());
@@ -67,6 +95,8 @@ export class JobViewComponent implements OnInit, OnDestroy {
     const tasks = this.draft?.taskList || [];
     return `${tasks.filter((task) => task.done).length} of ${tasks.length} complete`;
   }
+  /** Accepts no input; returns the persisted owner's display name for the compact summary. */
+  get ownerName() { return this.team.find((member) => member.id === this.job?.assigneeId)?.username || (this.job?.assigneeId ? 'Former team member' : 'Unassigned'); }
   /** Accepts no input; returns whether the stored owner is disabled or otherwise absent from the enabled staff list. */
   get unavailableOwner() {
     return !!this.draft?.assigneeId && !this.team.some((member) => member.id === this.draft.assigneeId);
@@ -75,6 +105,7 @@ export class JobViewComponent implements OnInit, OnDestroy {
   async load(slug: string) {
     if (slug === 'new') { await this.loadNew(); return; }
     this.creating = false;
+    this.detailsOpen = false;
     this.slug = slug;
     const request = ++this.requestId;
     this.loading = true;
@@ -86,12 +117,12 @@ export class JobViewComponent implements OnInit, OnDestroy {
       if (request !== this.requestId) return;
       const job = detail.detailData;
       const [customer, team] = await Promise.all([
-        firstValueFrom(this.http.get<any>(`/api/customers/${job.customerSlug}`)),
+        job.customerSlug ? firstValueFrom(this.http.get<any>(`/api/customers/${job.customerSlug}`)) : Promise.resolve({ detailData: null }),
         firstValueFrom(this.http.get<any>('/api/team')),
       ]);
       const jobs: any[] = [];
       let total = 1;
-      while (request === this.requestId && jobs.length < total) {
+      while (job.customerSlug && request === this.requestId && jobs.length < total) {
         const page = await firstValueFrom(this.http.get<any>(`/api/customers/${job.customerSlug}/jobs`, { params: { limit: 100, offset: jobs.length } }));
         jobs.push(...page.listData);
         total = page.total;
@@ -101,8 +132,9 @@ export class JobViewComponent implements OnInit, OnDestroy {
       this.job = job;
       this.customer = customer.detailData;
       this.team = team.listData;
-      this.jobs = jobs;
+      this.jobs = job.customerSlug ? jobs : [job];
       this.resetDraft();
+      void this.loadHistory();
     } catch (e: any) {
       if (request === this.requestId) this.error = e.error?.message || 'Unable to load this job.';
     } finally {
@@ -123,12 +155,26 @@ export class JobViewComponent implements OnInit, OnDestroy {
     this.customerSlug = this.route.snapshot.queryParamMap.get('customer') || '';
     this.newCustomer = { name: '', phone: '', email: '', address: '', body: '' };
     this.draft = { name: '', body: '', lane: 'planned', assigneeId: '', dueDate: '', priority: 'normal', taskList: [] };
+    this.labelsText = this.previewName = this.startDate = '';
+    this.dueOffset = null;
     this.savedDraft = JSON.stringify(this.draft);
     this.savedCustomer = JSON.stringify([this.customerMode, this.customerSlug, this.newCustomer]);
     try {
       const team = await firstValueFrom(this.http.get<any>('/api/team'));
       if (request !== this.requestId) return;
       this.team = team.listData;
+      const templateId = this.route.snapshot.queryParamMap.get('template');
+      const duplicateId = this.route.snapshot.queryParamMap.get('duplicate');
+      if (templateId && duplicateId) throw new Error('Choose one source for new work.');
+      if (templateId || duplicateId) {
+        const result = await firstValueFrom(this.http.get<any>(templateId ? `/api/templates/${encodeURIComponent(templateId)}` : `/api/jobs/${encodeURIComponent(duplicateId)}/duplicate`));
+        if (request !== this.requestId) return;
+        this.previewName = templateId ? result.data.name : 'Copy of existing work';
+        this.draft = templateId ? { ...this.draft, name: result.data.name, body: result.data.body, priority: result.data.priority, taskList: result.data.checklist.map((title) => ({ id: crypto.randomUUID(), title, done: false })) } : result.data;
+        this.dueOffset = templateId ? result.data.dueOffset : null;
+        this.labelsText = (this.draft.labels || []).join(', ');
+        this.savedDraft = JSON.stringify(this.draft);
+      }
       if (this.customerSlug) {
         const response = await firstValueFrom(this.http.get<any>(`/api/customers/${encodeURIComponent(this.customerSlug)}`));
         if (request !== this.requestId) return;
@@ -145,7 +191,7 @@ export class JobViewComponent implements OnInit, OnDestroy {
   }
   /** Accepts no input; returns whether a selected customer or a named new customer can receive this job. */
   get validCustomer() {
-    return !this.creating || (this.customerMode === 'new'
+    return !this.creating || this.customerMode === 'internal' || (this.customerMode === 'new'
       ? !!this.newCustomer.name.trim()
       : !!this.customer && this.customer.slug === this.customerSlug && !this.customer.isArchived);
   }
@@ -177,9 +223,11 @@ export class JobViewComponent implements OnInit, OnDestroy {
     this.error = '';
     try {
       const result = await firstValueFrom(this.http.post<any>('/api/jobs', {
-        job: this.draft,
-        ...(this.customerMode === 'new' ? { customer: this.newCustomer } : { customerSlug: this.customerSlug }),
+        job: { ...this.draft, labels: this.labelsText.split(',').map((label) => label.trim()).filter(Boolean) },
+        ...(this.customerMode === 'internal' ? { workKind: 'internal' } : this.customerMode === 'new' ? { customer: this.newCustomer } : { customerSlug: this.customerSlug }),
       }));
+      this.draft.labels = this.labelsText.split(',').map((label) => label.trim()).filter(Boolean);
+      this.labelsText = this.draft.labels.join(', ');
       this.savedDraft = JSON.stringify(this.draft);
       this.savedCustomer = JSON.stringify([this.customerMode, this.customerSlug, this.newCustomer]);
       this.saving = false;
@@ -198,8 +246,10 @@ export class JobViewComponent implements OnInit, OnDestroy {
       dueDate: this.job.dueDate,
       priority: this.job.priority,
       taskList: (this.job.taskList || []).map((task) => ({ ...task })),
+      labels: [...(this.job.labels || [])],
     };
     this.savedDraft = JSON.stringify(this.draft);
+    this.labelsText = this.draft.labels.join(', ');
   }
   /** Accepts no input; saves only this job with its version, preserving the draft on validation or conflict failure. */
   async save() {
@@ -210,6 +260,7 @@ export class JobViewComponent implements OnInit, OnDestroy {
     try {
       const data = {
         ...this.draft,
+        labels: this.labelsText.split(',').map((label) => label.trim()).filter(Boolean),
         version: this.job.version,
         isActive: this.draft.lane === 'active',
         isComplete: this.draft.lane === 'complete',
@@ -220,6 +271,8 @@ export class JobViewComponent implements OnInit, OnDestroy {
       this.jobs = this.jobs.map((job) => job.jobSlug === this.job.jobSlug ? this.job : job);
       this.resetDraft();
       this.notice = 'Job saved.';
+      void this.loadHistory();
+      this.detailsOpen = false;
     } catch (e: any) {
       this.error = e.error?.message || 'Unable to save this job. Your changes are still here.';
     } finally {
@@ -230,6 +283,27 @@ export class JobViewComponent implements OnInit, OnDestroy {
   addTask() {
     if (this.draft.taskList.length < 100)
       this.draft.taskList.push({ id: crypto.randomUUID(), title: '', done: false });
+  }
+  /** Accepts no input; applies a template's optional date offset to the deliberately selected start date. */
+  applyDeadline() { if (this.startDate && this.dueOffset !== null) this.draft.dueDate = shiftDate(this.startDate, this.dueOffset); }
+  /** Accepts an append flag; loads bounded change history and current follow state for this job. */
+  async loadHistory(append = false) {
+    const slug = this.job?.jobSlug;
+    if (!slug) return;
+    try {
+      const result = await firstValueFrom(this.http.get<any>(`/api/jobs/${slug}/history`, { params: { limit: 25, offset: append ? this.history.length : 0 } }));
+      if (this.job?.jobSlug !== slug) return;
+      this.history = append ? [...this.history, ...result.listData] : result.listData;
+      this.historyTotal = result.total; this.following = result.following;
+    } catch { this.error = 'Could not load job history. Your edits are still here.'; }
+  }
+  /** Accepts no input; toggles this user's subscription to job updates without changing ownership. */
+  async toggleFollow() {
+    if (this.followingBusy) return;
+    this.followingBusy = true;
+    try { const result = await firstValueFrom(this.http.put<any>(`/api/jobs/${this.job.jobSlug}/follow`, { following: !this.following })); this.following = result.following; }
+    catch (e: any) { this.error = e.error?.message || 'Could not change following.'; }
+    finally { this.followingBusy = false; }
   }
   /** Accepts a checklist index; removes that row from the draft without changing persisted work. */
   removeTask(index: number) {
@@ -247,7 +321,7 @@ export class JobViewComponent implements OnInit, OnDestroy {
   }
   /** Accepts no input; returns a boolean or a pending decision promise so navigation waits for explicit draft-discard consent. */
   canLeave() {
-    if (this.saving || this.discussion?.busy) return false;
+    if (this.saving || this.followingBusy || this.resourceWork.pending) return false;
     if (!this.unsaved) return true;
     if (this.leavePrompt) return false;
     this.leavePrompt = true;
@@ -263,6 +337,6 @@ export class JobViewComponent implements OnInit, OnDestroy {
   /** Accepts a browser unload event; requests the browser's standard warning when a draft or save is pending. */
   @HostListener('window:beforeunload', ['$event'])
   beforeUnload(event: BeforeUnloadEvent) {
-    if (this.unsaved || this.saving || this.discussion?.busy) { event.preventDefault(); event.returnValue = ''; }
+    if (this.unsaved || this.saving || this.followingBusy || this.resourceWork.pending) { event.preventDefault(); event.returnValue = ''; }
   }
 }

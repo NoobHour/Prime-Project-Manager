@@ -4,6 +4,9 @@ import {
   Component,
   ContentChildren,
   Input,
+  Output,
+  EventEmitter,
+  OnChanges,
   NgModule,
   OnDestroy,
   QueryList,
@@ -51,8 +54,10 @@ export class LegacyTabPanel {
     <div class="p-tabview-panels"><ng-content></ng-content></div>
   </div>`,
 })
-export class LegacyTabView implements AfterContentInit, OnDestroy {
+export class LegacyTabView implements AfterContentInit, OnDestroy, OnChanges {
   @Input() label = 'Tabs';
+  @Input() activeIndex = 0;
+  @Output() activeIndexChange = new EventEmitter<number>();
   @ContentChildren(LegacyTabPanel) panels!: QueryList<LegacyTabPanel>;
   selected = 0;
   private static nextId = 0;
@@ -62,20 +67,23 @@ export class LegacyTabView implements AfterContentInit, OnDestroy {
   constructor(private changes: ChangeDetectorRef) {}
   /** Accepts no arguments; selects the first projected tab once children are available. */
   ngAfterContentInit() {
-    this.select(0);
+    this.select(this.activeIndex, false);
     this.panelChanges = this.panels.changes.subscribe(() =>
       this.select(Math.min(this.selected, this.panels.length - 1)),
     );
     this.changes.detectChanges();
   }
+  /** Accepts changed inputs implicitly; restores a URL-selected panel once projected children exist. */
+  ngOnChanges() { if (this.panels) this.select(this.activeIndex, false); }
   /** Accepts a tab index; updates which existing projected panel is visible. */
-  select(index: number) {
+  select(index: number, emit = true) {
     this.selected = Math.max(0, Math.min(index, this.panels.length - 1));
     this.panels.forEach((panel, i) => {
       panel.active = i === this.selected;
       panel.panelId = `${this.id}-panel-${i}`;
       panel.labelledBy = `${this.id}-tab-${i}`;
     });
+    if (emit) this.activeIndexChange.emit(this.selected);
   }
   /** Accepts a tab key event and its index; selects/focuses the adjacent or endpoint tab while keeping all panel state mounted. */
   navigate(event: KeyboardEvent, index: number) {

@@ -5,6 +5,9 @@ import { BaseEntity } from '@mgmt/shared/api/foundation';
 @Entity('job')
 @Index('IDX_job_assignee_due', ['assigneeId', 'dueDate'])
 export class Job extends BaseEntity {
+  // An empty parent is valid only for explicitly internal work; legacy orphans remain customer work.
+  @Column({ default: 'customer' }) workKind: 'customer' | 'internal';
+  @Column({ type: 'simple-json', default: '[]' }) labels: string[];
   @Column({ default: '' }) assigneeId: string;
   @Column({ default: '' }) dueDate: string;
   @Column({ default: 'normal' }) priority: string;

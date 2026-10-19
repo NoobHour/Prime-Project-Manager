@@ -23,7 +23,7 @@ fieldset { min-width: 0; border: 0; margin: 0; padding: 0; }
 .checklist-heading span { color: #c4cdd8; }
 .checklist-row { display: flex; gap: .6rem; align-items: center; margin-bottom: .7rem; }
 .checklist-row .form-control { min-width: 0; margin: 0; }
-.save-bar { margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #465366; }
+.save-bar { position: sticky; bottom: 0; z-index: 2; background: #2a323d; margin-top: 1.5rem; padding: 1rem 0; border-top: 1px solid #465366; }
 .customer-heading { display: flex; gap: .8rem; align-items: center; margin: .6rem 0 1rem; }
 .customer-heading h2 { margin: 0; overflow-wrap: anywhere; }
 .customer-heading img { width: 4rem; height: 4rem; object-fit: cover; border-radius: .5rem; }

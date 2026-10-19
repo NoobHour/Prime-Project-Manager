@@ -5,11 +5,9 @@
     }}</span></a
   >
   <div class="workspace-account" *ngIf="isAuth">
-    <a class="btn btn-outline-primary" [routerLink]="'/@' + user?.username">{{
-      user?.username
-    }}</a
-    ><a class="btn btn-outline-primary" routerLink="/settings">Settings</a
-    ><a class="btn btn-outline-primary" routerLink="/register">Staff accounts</a
-    ><button class="btn btn-outline-primary" (click)="logout()">Logout</button>
+    <details class="account-menu"><summary class="btn btn-outline-primary">{{ user?.username }} · Account</summary><div class="menu-options">
+      <a [routerLink]="'/@' + user?.username">Profile</a><a routerLink="/settings">Profile settings</a>
+      <a *ngIf="user?.role === 'admin'" routerLink="/workspace">Workspace settings</a><a *ngIf="user?.role === 'admin'" routerLink="/register">Staff accounts</a><button class="btn btn-outline-primary" (click)="logout()">Logout</button>
+    </div></details>
   </div>
 </div>

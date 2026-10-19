@@ -21,7 +21,7 @@
     z-index: 100;
   "
 >
-  <nav class="p-tabmenu">
+  <nav class="p-tabmenu" aria-label="Primary navigation">
     <ul class="p-tabmenu-nav">
       <li
         *ngFor="let item of items"
@@ -33,6 +33,7 @@
           ><i [class]="item.icon"></i> {{ item.label }}</a
         >
       </li>
+      <li class="p-tabmenuitem"><details class="create-menu"><summary class="p-menuitem-link">Create</summary><div class="menu-options"><a routerLink="/job/new" (click)="$any($event.target).closest('details').open=false">New job</a><a routerLink="/templates" (click)="$any($event.target).closest('details').open=false">From template</a><a routerLink="/editor" (click)="$any($event.target).closest('details').open=false">New customer</a></div></details></li>
     </ul>
   </nav>
 </div>
@@ -41,3 +42,4 @@
 <div class="panel-prime" style="padding-top: 4rem">
   <router-outlet></router-outlet>
 </div>
+

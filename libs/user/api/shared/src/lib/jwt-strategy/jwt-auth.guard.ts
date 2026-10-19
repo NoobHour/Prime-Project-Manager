@@ -31,7 +31,7 @@ export class JwtAuthGuard implements CanActivate {
     const route = req.route?.path;
     if (runtime.sandbox && mutation &&
       (['/api/setup', '/api/users', '/api/staff/:id'].includes(route) ||
-        (req.method === 'POST' && route === '/api/customers/:slug/files')))
+        (req.method === 'POST' && ['/api/customers/:slug/files', '/api/jobs/:jobSlug/files'].includes(route))))
       throw new ForbiddenException('Account changes and uploads are disabled in the shared demo.');
     if (
       this.reflector.getAllAndOverride(SKIP_AUTH_KEY, [

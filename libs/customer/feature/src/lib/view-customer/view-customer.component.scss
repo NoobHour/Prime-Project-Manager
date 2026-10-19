@@ -7,3 +7,10 @@
 .leave-backdrop { position: fixed; inset: 0; z-index: 1200; display: grid; place-items: center; padding: 1rem; background: #111a; }
 .leave-dialog { width: 100%; max-width: 440px; padding: 1.25rem; background: #2a323d; border: 1px solid #526174; border-radius: .5rem; box-shadow: 0 8px 40px #0008; }
 .leave-actions { display: flex; gap: .7rem; flex-wrap: wrap; }
+/* Contact details and one compact job list keep resource access near the page heading. */
+.customer-workspace { max-width: 1400px; margin: auto; padding: 1rem; text-align: left; min-width: 0; }
+.customer-workspace h1 { font-size: 1.8rem; margin: 1rem 0; overflow-wrap: anywhere; }
+.customer-contact { padding: 1rem; border: 1px solid #465366; border-radius: .4rem; margin-bottom: 1rem; }
+.customer-contact summary { cursor: pointer; color: #8dd0ff; }
+.customer-contact dd { overflow-wrap: anywhere; }
+.customer-job-summary { display: grid; gap: .4rem; padding: 1rem 0; border-bottom: 1px solid #465366; overflow-wrap: anywhere; }

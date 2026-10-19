@@ -104,6 +104,8 @@ for (const file of [
   'THIRD_PARTY_NOTICES.md',
   'tools/check-public.cjs',
   'tools/source-bytes.cjs',
+  'tools/audit-workflows.cjs',
+  'docs/WORKSPACE-WORKFLOWS.md',
   'tools/build.cjs',
   'tools/start.cjs',
   'tools/demo.cjs',

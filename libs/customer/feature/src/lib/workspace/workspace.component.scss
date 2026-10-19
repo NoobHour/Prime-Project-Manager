@@ -1,0 +1,15 @@
+/* A shared page rhythm keeps search, settings and planning readable at all supported widths. */
+:host { display: block; min-width: 0; }
+.workspace-page { max-width: 1350px; margin: auto; padding: 1rem; text-align: left; min-width: 0; }
+h1 { font-size: 1.8rem; } h2 { font-size: 1.2rem; }
+label { display: block; margin: .7rem 0; }
+fieldset { border: 0; padding: 0; min-width: 0; }
+.filters, .actions { display: flex; flex-wrap: wrap; gap: .75rem; align-items: end; margin: 1rem 0; }
+.filters label { flex: 1 1 180px; margin: 0; }
+.result { display: grid; gap: .5rem; padding: 1rem; margin: .75rem 0; background: #2a323d; border: 1px solid #465366; border-radius: .4rem; overflow-wrap: anywhere; }
+.result > a { font-size: 1.1rem; font-weight: 600; }
+.result .btn { justify-self: start; white-space: normal; }
+.deadline { border-left: 4px solid #ffc36a; }
+.calendar-scroll { overflow-x: auto; max-width: 100%; margin-top: 1rem; }
+summary { cursor: pointer; padding: .6rem 0; color: #8dd0ff; }
+small { color: #c4cdd8; }

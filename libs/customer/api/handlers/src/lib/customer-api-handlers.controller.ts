@@ -20,9 +20,12 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Like, Repository } from 'typeorm';
 import { randomUUID } from 'node:crypto';
+import { jobLifecycle } from './job-lifecycle';
+import { WorkspaceService } from './workspace.service';
 import {
   CustomerService,
   Customer,
+  Comment,
   Job,
   JobService,
   CalendarService,
@@ -49,6 +52,7 @@ export class CustomerApiHandlersController {
     private comments: CommentService,
     private files: FileSysService,
     private users: UserService,
+    private workspace: WorkspaceService,
   ) {}
   /** Accepts a slug; returns its customer or a safe not-found response. */
   private async customer(slug: string) {
@@ -59,8 +63,7 @@ export class CustomerApiHandlersController {
   /** Accepts a customer and optional job slug; returns a validated association or rejects a job from another customer. */
   private async jobAssociation(customerSlug: string, value: any) {
     const jobSlug = text(value ?? '', 'Job', 100);
-    if (jobSlug && !(await this.jobs.findOne({ jobSlug, customerSlug })))
-      throw new BadRequestException('Job does not belong to this customer.');
+    await this.workspace.scope(customerSlug, jobSlug);
     return jobSlug;
   }
   /** Accepts a customer/team identity and optional job; returns a valid board association without allowing team messages into jobs. */
@@ -70,6 +73,65 @@ export class CustomerApiHandlersController {
       return '';
     }
     return this.jobAssociation(customerSlug, value);
+  }
+  /** Accepts a routed job and optional submitted scope; returns its validated parent, rejecting mismatched associations. */
+  private async routedScope(jobSlug: string, supplied?: string) {
+    if (supplied !== undefined && supplied !== jobSlug) throw new BadRequestException('Resource scope must match the routed job.');
+    return this.workspace.jobScope(jobSlug);
+  }
+  /** Accepts a job and page; returns only that job's discussion, including internal projects. */
+  @Get('jobs/:jobSlug/comments') async jobComments(@Param('jobSlug') jobSlug: string, @Query() query: any) {
+    const scope = await this.routedScope(jobSlug, query.jobSlug);
+    return this.listComments(scope.customerSlug, { ...query, jobSlug });
+  }
+  /** Accepts a job, author and message; posts to the job's validated resource scope. */
+  @Post('jobs/:jobSlug/comments') async postJobComment(@Param('jobSlug') jobSlug: string, @Req() req: any, @Body() data: any) {
+    const scope = await this.routedScope(jobSlug, data.jobSlug);
+    return this.createComment(req, scope.customerSlug, { ...data, jobSlug });
+  }
+  /** Accepts a job, message identity and versioned text; edits only a message from that exact job. */
+  @Put('jobs/:jobSlug/comments/:id') async editJobComment(@Param('jobSlug') jobSlug: string, @Param('id') id: string, @Req() req: any, @Body() data: any) {
+    const scope = await this.routedScope(jobSlug);
+    if (!(await this.comments.findOne({ id, jobSlug }))) throw new NotFoundException();
+    return this.editComment(req, scope.customerSlug, id, data);
+  }
+  /** Accepts a job, message identity and author; removes only a message from that exact job. */
+  @Delete('jobs/:jobSlug/comments/:id') async removeJobComment(@Param('jobSlug') jobSlug: string, @Param('id') id: string, @Req() req: any) {
+    const scope = await this.routedScope(jobSlug);
+    if (!(await this.comments.findOne({ id, jobSlug }))) throw new NotFoundException();
+    return this.deleteComment(req, scope.customerSlug, id);
+  }
+  /** Accepts a job and page; returns its appointments without requiring a customer record. */
+  @Get('jobs/:jobSlug/calendar') async jobEvents(@Param('jobSlug') jobSlug: string, @Query() query: any) {
+    const scope = await this.routedScope(jobSlug, query.jobSlug);
+    return this.events(scope.customerSlug, { ...query, jobSlug });
+  }
+  /** Accepts a job, author and appointment; validates and creates a job-owned appointment. */
+  @Post('jobs/:jobSlug/calendar') async postJobEvent(@Param('jobSlug') jobSlug: string, @Req() req: any, @Body() data: any) {
+    const scope = await this.routedScope(jobSlug, data.jobSlug);
+    return this.createEvent(req, scope.customerSlug, { ...data, jobSlug });
+  }
+  /** Accepts a job and metadata filters; returns a bounded page of only that job's files. */
+  @Get('jobs/:jobSlug/files') async jobFiles(@Param('jobSlug') jobSlug: string, @Query() query: any) {
+    const scope = await this.routedScope(jobSlug, query.jobSlug);
+    return this.listFiles(scope.customerSlug, { ...query, jobSlug });
+  }
+  /** Accepts a job; returns tags from that job's visible file metadata. */
+  @Get('jobs/:jobSlug/file-tags') async jobFileTags(@Param('jobSlug') jobSlug: string) {
+    const scope = await this.routedScope(jobSlug);
+    return this.availableFileTags(scope.customerSlug, { jobSlug });
+  }
+  /** Accepts a job and selected IDs; streams a ZIP only when every selected file belongs to the routed job. */
+  @Post('jobs/:jobSlug/files/download') async downloadJobFiles(@Param('jobSlug') jobSlug: string, @Body() data: any, @Res() res: any) {
+    const scope = await this.routedScope(jobSlug);
+    return this.downloadFiles(scope.customerSlug, data, res, jobSlug);
+  }
+  /** Accepts a routed job, authenticated author and bounded multipart upload; stores bytes under the validated job scope. */
+  @Post('jobs/:jobSlug/files')
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 10 * 1024 * 1024, files: 1, fields: 4 } }))
+  async uploadJobFile(@Param('jobSlug') jobSlug: string, @Req() req: any, @UploadedFile() file: any, @Body() data: any) {
+    const scope = await this.routedScope(jobSlug, data.jobSlug);
+    return this.upload(req, scope.customerSlug, file, { ...data, jobSlug });
   }
   /** Accepts a tag array or multipart JSON string; returns bounded, normalized unique tags or a safe validation error. */
   private fileTags(value: any) {
@@ -188,12 +250,14 @@ export class CustomerApiHandlersController {
     return { success: true, data: await this.customer(slug) };
   }
   /** Accepts customer identity; archives rather than removing customer history. */
-  @Delete('customers/:slug') async archive(@Param('slug') slug: string) {
+  @Delete('customers/:slug') async archive(@Param('slug') slug: string, @Body() data: any) {
     const row = await this.customer(slug);
-    await this.customers.update(
-      { id: row.id },
-      { isArchived: true, isActive: false },
+    this.version(data, row);
+    const changed = await this.customers.repository.update(
+      { id: row.id, version: row.version },
+      { isArchived: true, version: row.version + 1 },
     );
+    if (!changed.affected) throw new ConflictException('Customer changed. Reload before archiving.');
     return { success: true, data: null };
   }
   /** Accepts customer slug and page; returns jobs attached to that customer. */
@@ -210,18 +274,23 @@ export class CustomerApiHandlersController {
     return { success: true, listData, total };
   }
   /** Accepts board status; returns active or completed jobs with their customer labels. */
-  @Get('jobs') async board(@Query() query: any) {
+  @Get('jobs') async board(@Query() query: any, @Req() req?: any) {
+    const today = await this.workspace.today();
+    if ((query.overdue === 'true' || query.attention === 'true' || query.dueSoon === 'true') && !today)
+      throw new ConflictException('Choose the workspace timezone before using date-relative views.');
     const qb = this.jobs.repository
       .createQueryBuilder('job')
-      .innerJoin('customer', 'customer', 'customer.slug=job.customerSlug')
-      .where('customer.isArchived=0')
-      .andWhere('job.isArchived=0');
-    if (query.complete === 'true') qb.andWhere('job.isComplete=1');
-    else qb.andWhere('job.isComplete=0');
+      .leftJoin('customer', 'customer', 'customer.slug=job.customerSlug')
+      .where("((job.workKind='internal' AND job.customerSlug='') OR (job.workKind='customer' AND customer.slug IS NOT NULL))")
+      .andWhere(query.archived === 'true' ? '(customer.isArchived=1 OR job.isArchived=1)' : '(customer.isArchived=0 OR job.workKind=\'internal\') AND job.isArchived=0');
+    if (query.archived !== 'true') {
+      if (query.complete === 'true') qb.andWhere('job.isComplete=1');
+      else qb.andWhere('job.isComplete=0');
+    }
     if (query.attention === 'true')
       qb.andWhere(
         "(job.priority='urgent' OR (job.dueDate<>'' AND job.dueDate<:attentionToday))",
-        { attentionToday: new Date().toISOString().slice(0, 10) },
+        { attentionToday: today },
       );
     if (query.lane) {
       if (!['planned', 'active', 'complete'].includes(query.lane))
@@ -232,6 +301,10 @@ export class CustomerApiHandlersController {
       qb.andWhere('job.assigneeId=:assignee', {
         assignee: text(query.assignee, 'Assignee', 100),
       });
+    if (query.scope === 'mine') qb.andWhere('job.assigneeId=:currentUser', { currentUser: req.user.id });
+    if (query.scope === 'unassigned') qb.andWhere("job.assigneeId=''");
+    if (query.dueSoon === 'true') qb.andWhere("job.dueDate<>'' AND job.dueDate<=date(:today,'+14 days')", { today });
+    if (query.label) qb.andWhere('EXISTS(SELECT 1 FROM json_each(job.labels) label WHERE label.value=:label)', { label: this.fileTags([query.label])[0] });
     if (query.priority)
       qb.andWhere('job.priority=:priority', {
         priority: text(query.priority, 'Priority', 20),
@@ -243,15 +316,16 @@ export class CustomerApiHandlersController {
     if (query.overdue === 'true')
       qb.andWhere(
         "job.dueDate<>'' AND job.dueDate<:today AND job.isComplete=0",
-        { today: new Date().toISOString().slice(0, 10) },
+        { today },
       );
     const page = paging(query);
     const total = await qb.getCount();
     const rows = await qb
       .orderBy(
-        "CASE WHEN job.dueDate<>'' AND job.dueDate<date('now') AND job.isComplete=0 THEN 0 ELSE 1 END",
+        "CASE WHEN job.dueDate<>'' AND job.dueDate<:sortToday AND job.isComplete=0 THEN 0 ELSE 1 END",
         'ASC',
       )
+      .setParameter('sortToday', today || '')
       .addOrderBy(
         "CASE job.priority WHEN 'urgent' THEN 0 WHEN 'high' THEN 1 WHEN 'normal' THEN 2 ELSE 3 END",
         'ASC',
@@ -269,9 +343,12 @@ export class CustomerApiHandlersController {
     return {
       success: true,
       total,
+      today,
       listData: rows.map((row) => ({
         ...row,
-        customerName: customers.find((c) => c.slug === row.customerSlug)?.name,
+        customerName: row.workKind === 'internal' ? 'Internal project' : customers.find((c) => c.slug === row.customerSlug)?.name,
+        customerSlug: row.customerSlug || null,
+        customerArchived: !!customers.find((c) => c.slug === row.customerSlug)?.isArchived,
       })),
     };
   }
@@ -313,7 +390,7 @@ export class CustomerApiHandlersController {
     });
     if (new Set(taskList.map((item) => item.id)).size !== taskList.length)
       throw new BadRequestException('Checklist IDs must be unique.');
-    return { assigneeId, dueDate, priority, taskList };
+    return { assigneeId, dueDate, priority, taskList, labels: this.fileTags(data.labels ?? row.labels ?? []) };
   }
   /** Accepts parent/message identity and version; only its author may edit sanitized, nonempty text. */
   @Put('customers/:slug/comments/:id') async editComment(
@@ -347,31 +424,27 @@ export class CustomerApiHandlersController {
   @Get('customers/jobs/:slug') async job(@Param('slug') jobSlug: string) {
     const row = await this.jobs.findOne({ jobSlug });
     if (!row) throw new NotFoundException();
-    return { success: true, detailData: row };
+    return { success: true, detailData: { ...row, customerSlug: row.customerSlug || null } };
   }
   /** Accepts job form values; returns validated creation fields with consistent lifecycle flags. */
   private async newJobFields(data: any) {
     if (!data || typeof data !== 'object' || Array.isArray(data))
       throw new BadRequestException('Enter job details.');
-    const lane = data.lane ?? 'planned';
-    if (!['planned', 'active', 'complete', 'archived'].includes(lane))
-      throw new BadRequestException('Invalid job status.');
     return {
       name: text(data.name, 'Job name', 200, true),
       body: richText(data.body),
       ...(await this.planning(data)),
-      lane,
-      isActive: lane === 'active',
-      isComplete: lane === 'complete',
-      isArchived: lane === 'archived',
+      ...jobLifecycle(data),
     };
   }
   /** Accepts an authenticated author, job fields and exactly one customer choice; returns the job after saving both records atomically. */
   @Post('jobs') async createJobWorkspace(@Req() req: any, @Body() data: any) {
     const customerSlug = text(data.customerSlug ?? '', 'Customer', 100);
     const hasNewCustomer = data.customer !== undefined;
-    if (!!customerSlug === hasNewCustomer)
-      throw new BadRequestException('Choose an existing customer or enter a new customer.');
+    const internal = data.workKind === 'internal';
+    if (data.workKind !== undefined && !['customer', 'internal'].includes(data.workKind)) throw new BadRequestException('Invalid work kind.');
+    if (Number(!!customerSlug) + Number(hasNewCustomer) + Number(internal) !== 1)
+      throw new BadRequestException('Choose exactly one: existing customer, new customer, or internal project.');
     if (hasNewCustomer && (!data.customer || typeof data.customer !== 'object' || Array.isArray(data.customer)))
       throw new BadRequestException('Enter customer details.');
     const fields = await this.newJobFields(data.job);
@@ -384,11 +457,12 @@ export class CustomerApiHandlersController {
         const jobs = manager.getRepository(Job);
         const customer = customerFields
           ? await customers.save(customers.create({ ...customerFields, slug: randomUUID(), authorId: req.user.id }))
-          : await customers.findOne({ where: { slug: customerSlug } });
-        if (!customer) throw new NotFoundException('Customer not found.');
-        if (customer.isArchived) throw new ConflictException('Restore the customer before adding work.');
-        const job = await jobs.save(jobs.create({ ...fields, customerSlug: customer.slug, jobSlug: randomUUID() }));
-        return { success: true, data: job };
+          : internal ? null : await customers.findOne({ where: { slug: customerSlug } });
+        if (!internal && !customer) throw new NotFoundException('Customer not found.');
+        if (customer?.isArchived) throw new ConflictException('Restore the customer before adding work.');
+        const job = await jobs.save(jobs.create({ ...fields, workKind: internal ? 'internal' : 'customer', customerSlug: customer?.slug || '', jobSlug: randomUUID() }));
+        await this.workspace.changes(manager, null, job, req.user.id);
+        return { success: true, data: { ...job, customerSlug: job.customerSlug || null } };
       },
     );
   }
@@ -396,71 +470,75 @@ export class CustomerApiHandlersController {
   @Post('customers/:slug/jobs') async createJob(
     @Param('slug') customerSlug: string,
     @Body() data: any,
+    @Req() req: any,
   ) {
-    const c = await this.customer(customerSlug);
-    if (c.isArchived)
-      throw new ConflictException('Restore the customer before adding work.');
-    return {
-      success: true,
-      data: await this.jobs.repository.save(
-        this.jobs.repository.create({
-          customerSlug,
-          jobSlug: randomUUID(),
-          ...(await this.newJobFields(data)),
-        }),
-      ),
-    };
+    return this.createJobWorkspace(req, { customerSlug, job: data });
   }
   /** Accepts job slug and editable fields; updates status and scope with conflict detection. */
   @Put('customers/jobs/:slug') async updateJob(
     @Param('slug') jobSlug: string,
     @Body() data: any,
+    @Req() req?: any,
   ) {
     const row = (await this.job(jobSlug)).detailData;
     this.version(data, row);
-    const lane = data.lane ?? row.lane;
-    if (!['planned', 'active', 'complete', 'archived'].includes(lane))
-      throw new BadRequestException('Invalid job lane.');
-    const changed = await this.jobs.repository.update(
+    const lifecycle = jobLifecycle(data, row);
+    if ((data.workKind !== undefined && data.workKind !== row.workKind) || (data.customerSlug !== undefined && data.customerSlug !== row.customerSlug))
+      throw new BadRequestException('Moving existing work between customers or work kinds is not supported.');
+    if (row.customerSlug && row.isArchived && !lifecycle.isArchived && (await this.customer(row.customerSlug)).isArchived)
+      throw new ConflictException('Restore the customer before restoring this job.');
+    const planning = await this.planning(data, row);
+    return this.jobs.repository.manager.transaction(
+      /** Accepts the write transaction; returns the confirmed job with its history committed together. */
+      async (manager) => {
+    const changed = await manager.getRepository(Job).update(
       { id: row.id, version: data.version },
       {
         name: text(data.name, 'Job name', 200, true),
         body: richText(data.body ?? row.body),
-        ...(await this.planning(data, row)),
-        isActive: data.isActive === true,
-        isComplete: data.isComplete === true,
-        isArchived: data.isArchived === true,
-        lane,
+        ...planning,
+        ...lifecycle,
         version: row.version + 1,
       },
     );
     if (!changed.affected)
       throw new ConflictException('Job changed. Reload before saving.');
-    return { success: true, data: (await this.job(jobSlug)).detailData };
+    const saved = await manager.getRepository(Job).findOne({ where: { jobSlug } });
+    await this.workspace.changes(manager, row, saved, req?.user?.id || '');
+    return { success: true, data: { ...saved, customerSlug: saved.customerSlug || null } };
+    });
   }
   /** Accepts job identity; archives the job and retains its attachments. */
   @Delete('customers/jobs/:slug') async archiveJob(
     @Param('slug') jobSlug: string,
+    @Body() data: any,
+    @Req() req?: any,
   ) {
-    await this.job(jobSlug);
-    await this.jobs.update(
-      { jobSlug },
-      { isArchived: true, isActive: false, lane: 'archived' },
-    );
-    return { success: true, data: null };
+    const row = (await this.job(jobSlug)).detailData;
+    return this.updateJob(jobSlug, { name: row.name, version: data.version, lane: 'archived' }, req);
   }
-  /** Accepts customer slug and paging; returns calendar entries for the calendar component. */
+  /** Accepts a job identity and version; restores it to planned work through the same lifecycle and concurrency rules. */
+  @Post('jobs/:slug/restore') async restoreJob(@Param('slug') jobSlug: string, @Body() data: any, @Req() req: any) {
+    const row = (await this.job(jobSlug)).detailData;
+    if (!row.isArchived) throw new ConflictException('This job is not archived.');
+    return this.updateJob(jobSlug, { name: row.name, version: data.version, lane: 'planned' }, req);
+  }
+  /** Accepts scope, paging and an optional bounded time range or exact identity; returns matching appointments. */
   @Get('customers/calendar/:slug') async events(
     @Param('slug') customerSlug: string,
     @Query() query: any,
   ) {
-    await this.customer(customerSlug);
     const jobSlug = await this.jobAssociation(customerSlug, query.jobSlug);
-    const [listData, total] = await this.calendars.repository.findAndCount({
-      where: { customerSlug, ...(query.jobSlug !== undefined ? { jobSlug } : {}) },
-      ...paging(query),
-      order: { start: 'ASC' },
-    });
+    const qb = this.calendars.repository.createQueryBuilder('event').where('event.customerSlug=:customerSlug', { customerSlug });
+    if (query.jobSlug !== undefined) qb.andWhere('event.jobSlug=:jobSlug', { jobSlug });
+    if (query.id) qb.andWhere('event.calendarSlug=:id', { id: text(query.id, 'Appointment', 100) });
+    if (query.from || query.to) {
+      const from = date(query.from), to = date(query.to);
+      if (to <= from || Date.parse(to) - Date.parse(from) > 93 * 86400000) throw new BadRequestException('Choose a range of at most 93 days.');
+      qb.andWhere('julianday(event.start) < julianday(:to) AND julianday(event.end) > julianday(:from)', { from, to });
+    }
+    const page = paging(query);
+    const [listData, total] = await qb.orderBy('event.start', 'ASC').addOrderBy('event.id', 'ASC').skip(page.skip).take(page.take).getManyAndCount();
     return { success: true, listData, total };
   }
   /** Accepts event fields; returns sanitized subject, notes and a valid UTC time range. */
@@ -482,7 +560,8 @@ export class CustomerApiHandlersController {
     @Param('slug') customerSlug: string,
     @Body() data: any,
   ) {
-    await this.customer(customerSlug);
+    const scope = await this.workspace.scope(customerSlug, data.jobSlug || '');
+    if (scope.archived) throw new ConflictException('Restore this work before scheduling appointments.');
     return {
       success: true,
       data: await this.calendars.repository.save(
@@ -503,6 +582,8 @@ export class CustomerApiHandlersController {
   ) {
     const row = await this.calendars.findOne({ calendarSlug });
     if (!row) throw new NotFoundException();
+    await this.workspace.scope(row.customerSlug, row.jobSlug);
+    if (!row.customerSlug && data.jobSlug !== undefined && data.jobSlug !== row.jobSlug) throw new BadRequestException('Internal appointments must stay with their project.');
     this.version(data, row);
     const result = await this.calendars.repository.update(
       { id: row.id, version: data.version },
@@ -530,10 +611,10 @@ export class CustomerApiHandlersController {
     @Param('slug') customerSlug: string,
     @Query() query: any,
   ) {
-    if (customerSlug !== '__team__') await this.customer(customerSlug);
+    await this.workspace.scope(customerSlug, query.jobSlug || '', true);
     const jobSlug = await this.discussionJob(customerSlug, query.jobSlug);
     const [rows, total] = await this.comments.repository.findAndCount({
-      where: { customerSlug, ...(query.jobSlug !== undefined ? { jobSlug } : {}) },
+      where: { customerSlug, ...(query.jobSlug !== undefined ? { jobSlug } : {}), ...(query.id ? { id: text(query.id, 'Message', 100) } : {}) },
       ...paging(query),
       order: { createdAt: 'DESC', id: 'DESC' },
     });
@@ -557,26 +638,20 @@ export class CustomerApiHandlersController {
     @Param('slug') customerSlug: string,
     @Body() data: any,
   ) {
-    if (customerSlug !== '__team__') await this.customer(customerSlug);
+    await this.workspace.scope(customerSlug, data.jobSlug || '', true);
     const jobSlug = await this.discussionJob(customerSlug, data.jobSlug);
     const body = richText(data.body);
     if (!body.replace(/<[^>]*>/g, '').trim())
       throw new BadRequestException('Enter a message.');
-    return {
-      success: true,
-      data: {
-        ...(await this.comments.repository.save(
-          this.comments.repository.create({
-            body,
-            customerSlug,
-            jobSlug,
-            authorId: req.user.id,
-          }),
-        )),
-        author: this.users.profile(req.user),
-        jobName: jobSlug ? (await this.jobs.findOne({ jobSlug })).name : '',
+    return this.comments.repository.manager.transaction(
+      /** Accepts a transaction; returns a message and commits its update event in the same write. */
+      async (manager) => {
+        const repository = manager.getRepository(Comment);
+        const row = await repository.save(repository.create({ body, customerSlug, jobSlug, authorId: req.user.id }));
+        if (jobSlug) await manager.query('INSERT INTO work_event(jobSlug,actorId,kind,beforeValue,afterValue,messageId,createdAt) VALUES(?,?,?,?,?,?,?)', [jobSlug, req.user.id, 'message', '', '', row.id, new Date().toISOString()]);
+        return { success: true, data: { ...row, author: this.users.profile(req.user), jobName: jobSlug ? (await this.jobs.findOne({ jobSlug })).name : '' } };
       },
-    };
+    );
   }
   /** Accepts parent and message identity; verifies ownership before archiving the message. */
   @Delete('customers/:slug/comments/:id') async deleteComment(
@@ -595,11 +670,11 @@ export class CustomerApiHandlersController {
     @Param('slug') customerSlug: string,
     @Query() query: any,
   ) {
-    await this.customer(customerSlug);
     const jobSlug = await this.jobAssociation(customerSlug, query.jobSlug);
     const qb = this.files.repository.createQueryBuilder('file')
       .where('file.customerSlug=:customerSlug AND file.isArchived=0', { customerSlug });
     if (query.jobSlug !== undefined) qb.andWhere('file.jobSlug=:jobSlug', { jobSlug });
+    if (query.id) qb.andWhere('file.id=:id', { id: text(query.id, 'File', 100) });
     if (query.tag) qb.andWhere('EXISTS (SELECT 1 FROM json_each(file.tags) tag WHERE tag.value=:tag)', { tag: this.fileTags([query.tag])[0] });
     if (query.search) qb.andWhere('file.name LIKE :search', { search: '%' + text(query.search, 'Search', 200) + '%' });
     const page = paging(query);
@@ -608,7 +683,6 @@ export class CustomerApiHandlersController {
   }
   /** Accepts a customer and optional job scope; returns available tag choices from metadata only, independent of the current filter. */
   @Get('customers/:slug/file-tags') async availableFileTags(@Param('slug') customerSlug: string, @Query() query: any) {
-    await this.customer(customerSlug);
     const jobSlug = await this.jobAssociation(customerSlug, query.jobSlug);
     const rows = await this.files.repository.find({
       where: { customerSlug, isArchived: false, ...(query.jobSlug !== undefined ? { jobSlug } : {}) },
@@ -621,8 +695,9 @@ export class CustomerApiHandlersController {
     @Param('slug') customerSlug: string,
     @Body() data: any,
     @Res() res: any,
+    scopeJobSlug = '',
   ) {
-    await this.customer(customerSlug);
+    await this.workspace.scope(customerSlug, scopeJobSlug);
     if (
       !Array.isArray(data.ids) ||
       !data.ids.length ||
@@ -636,6 +711,7 @@ export class CustomerApiHandlersController {
         customerSlug,
       })
       .andWhere('f.id IN (:...ids)', { ids: [...new Set(data.ids)] })
+      .andWhere(scopeJobSlug ? 'f.jobSlug=:scopeJobSlug' : '1=1', { scopeJobSlug })
       .getMany();
     if (rows.length !== new Set(data.ids).size)
       throw new NotFoundException('A selected file no longer exists.');
@@ -686,8 +762,8 @@ export class CustomerApiHandlersController {
     @UploadedFile() file: any,
     @Body() data: any,
   ) {
-    const c = await this.customer(customerSlug);
-    if (c.isArchived) throw new ConflictException('Customer is archived.');
+    const scope = await this.workspace.scope(customerSlug, data.jobSlug || '');
+    if (scope.archived) throw new ConflictException('Restore this work before uploading files.');
     if (!file?.buffer?.length)
       throw new BadRequestException('Choose a nonempty file.');
     const name = text(file.originalname, 'Filename', 200, true);
@@ -697,6 +773,7 @@ export class CustomerApiHandlersController {
     if (jobSlug && !(await this.jobs.findOne({ jobSlug, customerSlug })))
       throw new BadRequestException('Job does not belong to this customer.');
     const category = data.category || 'document';
+    if (!customerSlug && category === 'avatar') throw new BadRequestException('Internal projects do not have customer avatars.');
     if (!['document', 'photo', 'avatar', 'misc'].includes(category))
       throw new BadRequestException('Invalid category.');
     const fileType = this.imageType(file.buffer);
@@ -748,6 +825,7 @@ export class CustomerApiHandlersController {
       .getOne();
     if (!row) throw new NotFoundException();
     const inline = mode === 'view' && row.fileType.startsWith('image/');
+    await this.workspace.scope(row.customerSlug, row.jobSlug);
     res.setHeader(
       'Content-Type',
       inline ? row.fileType : 'application/octet-stream',
@@ -773,13 +851,11 @@ export class CustomerApiHandlersController {
     const name = text(data.name, 'Filename', 200, true);
     if (/[\\/\r\n]/.test(name))
       throw new BadRequestException('Invalid filename.');
-    const jobSlug = text(data.jobSlug ?? '', 'Job', 100);
-    if (
-      jobSlug &&
-      !(await this.jobs.findOne({ jobSlug, customerSlug: row.customerSlug }))
-    )
-      throw new BadRequestException('Job does not belong to this customer.');
+    const jobSlug = text(data.jobSlug ?? row.jobSlug, 'Job', 100);
+    await this.workspace.scope(row.customerSlug, jobSlug);
+    if (!row.customerSlug && jobSlug !== row.jobSlug) throw new BadRequestException('Moving files between internal projects is not supported.');
     const category = data.category ?? row.category;
+    if (!row.customerSlug && category === 'avatar') throw new BadRequestException('Internal projects do not have customer avatars.');
     if (!['document', 'photo', 'avatar', 'misc'].includes(category))
       throw new BadRequestException('Invalid category.');
     const changed = await this.files.repository.update(

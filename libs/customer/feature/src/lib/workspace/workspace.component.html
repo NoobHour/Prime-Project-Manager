@@ -1,0 +1,49 @@
+<main class="workspace-page">
+  <h1>{{ mode === 'workspace' ? 'Workspace settings' : (mode | titlecase) }}</h1>
+  <p *ngIf="error" class="text-danger" role="alert">{{ error }}</p><p *ngIf="notice" role="status">{{ notice }}</p>
+  <section *ngIf="mode === 'workspace' && draft">
+    <p>Choose the timezone used for deadlines, Today and appointment entry. Existing appointment timestamps stay unchanged.</p>
+    <p *ngIf="!settings.timezone">Confirm the suggested browser timezone to enable My work and Schedule.</p>
+    <form (ngSubmit)="saveSettings()"><fieldset [disabled]="busy || users.userInfo?.role !== 'admin'">
+      <label>Workspace timezone<input class="form-control" name="timezone" [(ngModel)]="draft.timezone" required maxlength="100" placeholder="America/Chicago" /></label>
+      <label>Navigation terminology<select class="form-control" name="terminology" [(ngModel)]="draft.terminology"><option value="jobs">Jobs / Customers</option><option value="projects">Projects / Contacts</option></select></label>
+      <button type="submit" class="btn btn-primary">{{ busy ? 'Saving…' : 'Save workspace settings' }}</button>
+    </fieldset></form><p *ngIf="users.userInfo?.role !== 'admin'">An administrator can change these settings.</p>
+  </section>
+  <section *ngIf="mode === 'schedule'">
+    <p>Team appointments and job deadlines · {{ settings?.timezone || 'Timezone not configured' }}. Appointments are shared; their author is not an assigned attendee.</p>
+    <a *ngIf="settings && !settings.timezone" routerLink="/workspace">Choose the workspace timezone</a>
+    <form class="filters" (ngSubmit)="apply()" *ngIf="settings?.timezone">
+      <label>From<input type="date" name="from" class="form-control" [(ngModel)]="from" required /></label>
+      <label>Through<input type="date" name="to" class="form-control" [(ngModel)]="to" required /></label>
+      <label>Show<select name="type" class="form-control" [(ngModel)]="type"><option value="">Appointments and deadlines</option><option value="appointment">Appointments</option><option value="deadline">Deadlines</option></select></label>
+      <label>View<select name="view" class="form-control" [(ngModel)]="view"><option value="agenda">Agenda</option><option value="month">Month</option><option value="week">Week</option><option value="day">Day</option></select></label>
+      <button type="submit" class="btn btn-primary" [disabled]="loading">Apply</button>
+    </form>
+    <details *ngIf="settings?.timezone"><summary>Filter by customer or project{{ customerSlug || jobSlug ? ' · Filter active' : '' }}</summary><label>Find a customer or project<input class="form-control" [(ngModel)]="scopeSearch" (ngModelChange)="findScope()" maxlength="200" /></label><div class="actions"><button *ngFor="let row of scopeChoices" type="button" class="btn btn-outline-primary" (click)="chooseScope(row)">{{ row.title }} · {{ row.type }}</button><button type="button" class="btn btn-outline-primary" (click)="customerSlug='';jobSlug='';apply()">All work</button></div></details>
+    <div class="calendar-scroll" *ngIf="view !== 'agenda' && settings?.timezone">
+      <p>The calendar starts at the selected From date. Deadlines are amber; appointments are blue. This view shows the current result page.</p>
+      <mwl-calendar-month-view *ngIf="view === 'month'" [viewDate]="viewDate" [events]="events" (eventClicked)="openEvent($event.event)"></mwl-calendar-month-view>
+      <mwl-calendar-week-view *ngIf="view === 'week'" [viewDate]="viewDate" [events]="events" (eventClicked)="openEvent($event.event)"></mwl-calendar-week-view>
+      <mwl-calendar-day-view *ngIf="view === 'day'" [viewDate]="viewDate" [events]="events" (eventClicked)="openEvent($event.event)"></mwl-calendar-day-view>
+    </div>
+    <div *ngIf="view === 'agenda'"><article *ngFor="let row of rows" class="result" [class.deadline]="row.allDay"><span>{{ row.allDay ? 'Deadline · '+row.start : time(row.start)+' – '+time(row.end) }}</span><a [routerLink]="link(row)" [queryParams]="linkParams(row)">{{ row.title }}</a><small>{{ row.customerName }}{{ row.jobName ? ' · '+row.jobName : '' }}</small></article></div>
+  </section>
+  <section *ngIf="mode === 'search'">
+    <form (ngSubmit)="apply()" class="filters"><label>Search customers, jobs and file metadata<input class="form-control" name="q" [(ngModel)]="search" required maxlength="200" /></label><button type="submit" class="btn btn-primary">Search</button></form>
+    <ng-container *ngFor="let kind of ['customer','job','file']"><h2 *ngIf="rows.length">{{ kind | titlecase }} results</h2><ng-container *ngFor="let row of rows"><article class="result" *ngIf="row.type === kind"><a [routerLink]="link(row)" [queryParams]="linkParams(row)">{{ row.title }}</a><small>{{ row.customerName }}</small></article></ng-container></ng-container>
+  </section>
+  <section *ngIf="mode === 'templates'">
+    <p>Preview reusable scope and steps before creating a job. Conversations, files, appointments and customer history are never copied.</p>
+    <button *ngIf="users.userInfo?.role === 'admin'" class="btn btn-outline-primary" type="button" (click)="editTemplate()">New template</button>
+    <article *ngFor="let row of rows" class="result"><h2>{{ row.name }}</h2><div [innerHTML]="row.body"></div><p>{{ row.checklist.length }} steps · {{ row.priority }} priority{{ row.dueOffset !== null ? ' · Due '+row.dueOffset+' days after start' : '' }}</p><div class="actions"><a class="btn btn-outline-primary" routerLink="/job/new" [queryParams]="{template:row.id}">Preview new job</a><button *ngIf="users.userInfo?.role === 'admin'" type="button" class="btn btn-outline-primary" (click)="editTemplate(row)">Edit template</button></div></article>
+    <form *ngIf="template" (ngSubmit)="saveTemplate()"><h2>Template details</h2><fieldset [disabled]="busy">
+      <label>Name<input class="form-control" name="name" [(ngModel)]="template.name" required maxlength="120" /></label><label>Scope<textarea class="form-control" name="body" [(ngModel)]="template.body" rows="4"></textarea></label><label>Checklist titles (one per line)<textarea class="form-control" name="checklist" [(ngModel)]="checklistText" rows="6"></textarea></label>
+      <label>Priority<select class="form-control" name="priority" [(ngModel)]="template.priority"><option value="low">Low</option><option value="normal">Normal</option><option value="high">High</option><option value="urgent">Urgent</option></select></label><label>Days from start to deadline (optional)<input class="form-control" type="number" name="dueOffset" [(ngModel)]="template.dueOffset" min="0" max="365" /></label><button class="btn btn-primary" type="submit">Save template</button>
+    </fieldset></form>
+  </section>
+  <section *ngIf="mode === 'updates'"><p>Assignments and changes to jobs you follow. Repeated changes are grouped; marking one job read leaves other jobs untouched.</p><article *ngFor="let row of rows" class="result"><a [routerLink]="link(row)" [queryParams]="linkParams(row)">{{ row.jobName }}</a><span>{{ row.kind === 'message' ? 'New discussion message' : row.kind === 'assigneeId' ? 'Owner changed' : row.kind === 'dueDate' ? 'Deadline changed' : 'Status changed' }}{{ row.count > 1 ? ' · '+row.count+' updates' : '' }}</span><small>{{ row.actor || 'Former team member' }} · {{ time(row.createdAt) }}</small><button class="btn btn-outline-primary" type="button" [disabled]="busy" (click)="markRead(row)">Mark this job read through this update</button></article></section>
+  <p *ngIf="loading" role="status">Loading…</p>
+  <p *ngIf="!loading && !error && !rows.length && mode !== 'workspace' && (mode !== 'search' || search) && (mode !== 'schedule' || settings?.timezone)">{{ mode === 'updates' ? 'You are caught up. Follow jobs from their workspace to receive their updates.' : 'No matching results. Try another date range or filter.' }}</p>
+  <nav *ngIf="total > 50" class="actions" aria-label="Result pages"><button class="btn btn-outline-primary" [disabled]="loading || offset === 0" (click)="load(offset-50)">Previous</button><span>{{ offset+1 }}–{{ offset+rows.length }} of {{ total }}</span><button class="btn btn-outline-primary" [disabled]="loading || offset+rows.length >= total" (click)="load(offset+50)">Next</button></nav>
+</main>

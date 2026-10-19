@@ -9,3 +9,4 @@ export * from './lib/file-util/file-util.module';
 
 export { JobBoardModule } from './lib/job-board.module';
 export { JobViewModule } from './lib/job-view/job-view.module';
+export { WorkspaceModule } from './lib/workspace/workspace.module';

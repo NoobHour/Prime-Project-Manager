@@ -7,15 +7,17 @@ import {
   OnDestroy,
 } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { ActivatedRoute } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { IUserService } from '@mgmt/user/shared';
+import { EditorState, mayReplace } from '../editor-state';
 @Component({
   standalone: false,
   selector: 'mgmt-file-util',
   templateUrl: './file-util.component.html',
   styleUrls: ['./file-util.component.scss'],
 })
-export class FileUtilComponent implements OnChanges, OnDestroy {
+export class FileUtilComponent implements OnChanges, OnDestroy, EditorState {
   @Input() customer: any;
   @Input() jobs: any[] = [];
   @Input() scopeJobSlug = '';
@@ -28,6 +30,7 @@ export class FileUtilComponent implements OnChanges, OnDestroy {
   total = 0;
   search = '';
   activeTag = '';
+  linkedFile = '';
   availableTags: string[] = [];
   uploadTags: string[] = [];
   newTag = '';
@@ -37,6 +40,23 @@ export class FileUtilComponent implements OnChanges, OnDestroy {
   loading = false;
   private requestId = 0;
   private context = '';
+  private savedMetadata = '';
+  /** Accepts no input; returns the validated job-first endpoint or the customer-general endpoint. */
+  get resourceUrl() { return this.scopeJobSlug ? `/api/jobs/${this.scopeJobSlug}` : `/api/customers/${this.customer?.slug}`; }
+  /** Accepts no input; reports changed metadata and prepared upload tags without treating an unchanged selection as a draft. */
+  get hasDraft() {
+    return !!this.newTag.trim() || !!this.uploadTags.length || !!this.editTag.trim() ||
+      (!!this.editing && JSON.stringify(this.editing) !== this.savedMetadata);
+  }
+  /** Accepts no input; clears metadata and upload preparation after the page has obtained discard permission. */
+  discardDraft() { this.editing = null; this.editTag = this.newTag = ''; this.uploadTags = []; }
+  /** Accepts no input; closes metadata editing only after confirming loss of changed values. */
+  cancelEdit() {
+    if (this.busy) return;
+    if (this.editing && (JSON.stringify(this.editing) !== this.savedMetadata || this.editTag.trim()) && !confirm('Discard these file details?')) return;
+    this.editing = null;
+    this.editTag = '';
+  }
   /** Accepts no input; returns whether at least one visible file is selected for ZIP download. */
   get hasSelection() {
     return this.files.some((file) => file.selected);
@@ -45,12 +65,14 @@ export class FileUtilComponent implements OnChanges, OnDestroy {
   constructor(
     private http: HttpClient,
     public users: IUserService,
+    private route?: ActivatedRoute,
   ) {}
   /** Accepts changed inputs implicitly; refreshes files only after a customer identity is available. */
   ngOnChanges() {
     const context = `${this.customer?.slug || ''}:${this.scopeJobSlug}`;
-    if (this.customer?.slug && context !== this.context) {
+    if ((this.customer?.slug || this.scopeJobSlug) && context !== this.context) {
       this.context = context;
+      this.linkedFile = this.route?.snapshot.queryParamMap?.get('file') || '';
       this.search = this.activeTag = this.newTag = this.editTag = '';
       this.uploadTags = this.availableTags = [];
       this.jobSlug = this.scopeJobSlug;
@@ -69,16 +91,17 @@ export class FileUtilComponent implements OnChanges, OnDestroy {
     this.error = '';
     try {
       const [response, tags] = await Promise.all([firstValueFrom(
-        this.http.get<any>(`/api/customers/${this.customer.slug}/files`, {
+        this.http.get<any>(`${this.resourceUrl}/files`, {
           params: {
             offset: append ? this.files.length : 0,
             limit: 50,
             search: this.search.trim(),
             tag: this.activeTag,
+            ...(this.linkedFile ? { id: this.linkedFile } : {}),
             ...(this.scopeJobSlug ? { jobSlug: this.scopeJobSlug } : {}),
           },
         }),
-      ), firstValueFrom(this.http.get<any>(`/api/customers/${this.customer.slug}/file-tags`, { params: this.scopeJobSlug ? { jobSlug: this.scopeJobSlug } : {} }))]);
+      ), firstValueFrom(this.http.get<any>(`${this.resourceUrl}/file-tags`, { params: this.scopeJobSlug ? { jobSlug: this.scopeJobSlug } : {} }))]);
       if (request !== this.requestId) return;
       this.files = append
         ? [...this.files, ...response.listData]
@@ -94,7 +117,7 @@ export class FileUtilComponent implements OnChanges, OnDestroy {
   /** Accepts a tag label; applies an exact tag filter and refreshes the visible file page. */
   filterTag(tag: string) { this.activeTag = tag; this.load(); }
   /** Accepts no input; clears name/tag filters and shows all files in the current customer/job scope. */
-  clearFilters() { this.search = this.activeTag = ''; this.load(); }
+  clearFilters() { this.search = this.activeTag = this.linkedFile = ''; this.load(); }
   /** Accepts the upload/edit target; adds one normalized unique tag and returns whether the pending label is valid. */
   addTag(target: 'upload' | 'edit') {
     const tag = (target === 'upload' ? this.newTag : this.editTag).normalize('NFC').trim().toLowerCase();
@@ -127,12 +150,14 @@ export class FileUtilComponent implements OnChanges, OnDestroy {
         data.append('tags', JSON.stringify(this.uploadTags));
         data.append('jobSlug', this.scopeJobSlug || (this.category === 'avatar' ? '' : this.jobSlug));
         await firstValueFrom(
-          this.http.post(`/api/customers/${this.customer.slug}/files`, data),
+          this.http.post(`${this.resourceUrl}/files`, data),
         );
       }
       await this.load();
       this.changed.emit();
       this.notice = 'Files uploaded.';
+      this.uploadTags = [];
+      this.newTag = '';
     } catch (e: any) {
       this.error = e.error?.message || 'Upload failed.';
     } finally {
@@ -147,7 +172,7 @@ export class FileUtilComponent implements OnChanges, OnDestroy {
     try {
       const blob = await firstValueFrom(
         this.http.post(
-          `/api/customers/${this.customer.slug}/files/download`,
+          `${this.resourceUrl}/files/download`,
           { ids },
           { responseType: 'blob' },
         ),
@@ -167,8 +192,11 @@ export class FileUtilComponent implements OnChanges, OnDestroy {
   }
   /** Accepts a file row; opens an editable metadata copy without changing server state. */
   edit(file: any) {
+    if (this.busy) return;
+    if (this.editing && (JSON.stringify(this.editing) !== this.savedMetadata || this.editTag.trim()) && !confirm('Discard the file draft and open these details?')) return;
     this.editing = { ...file, tags: [...(file.tags || [])] };
     this.editTag = '';
+    this.savedMetadata = JSON.stringify(this.editing);
   }
   /** Accepts no arguments; saves versioned filename, job, category and tags while preserving the draft on conflicts. */
   async save() {
@@ -190,13 +218,17 @@ export class FileUtilComponent implements OnChanges, OnDestroy {
   }
   /** Accepts a file row; removes it only after the user confirms, then refreshes the metadata. */
   async remove(file: any) {
+    if (this.busy) return;
     if (!confirm(`Delete ${file.name}?`)) return;
+    if (this.editing?.id === file.id && !mayReplace(this, 'Discard the draft for this file?')) return;
+    this.busy = true;
     try {
       await firstValueFrom(this.http.delete(`/api/files/${file.id}`));
+      if (this.editing?.id === file.id) { this.editing = null; this.editTag = ''; }
       await this.load();
       this.changed.emit();
     } catch (e: any) {
       this.error = e.error?.message || 'Unable to remove file.';
-    }
+    } finally { this.busy = false; }
   }
 }

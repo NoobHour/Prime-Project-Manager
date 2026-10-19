@@ -16,6 +16,15 @@ export class JobBoardComponent implements OnInit, OnDestroy {
   team: any[] = [];
   total = 0;
   complete = false;
+  archived = false;
+  today = '';
+  label = '';
+  scope = '';
+  dueSoon = false;
+  views: any[] = [];
+  viewName = '';
+  /** Accepts no input; returns the current bookmarkable board URL for workspace return links. */
+  get returnUrl() { return this.router.url; }
   error = '';
   search = '';
   assignee = '';
@@ -41,6 +50,7 @@ export class JobBoardComponent implements OnInit, OnDestroy {
   }
   /** Accepts no input; loads owners independently of the initial job search. */
   ngOnInit() {
+    this.http.get<any>('/api/views').subscribe({ next: (result) => { this.views = result.listData; }, error: () => { this.error = 'Could not load saved views.'; } });
     this.http.get<any>('/api/team').subscribe({
       next: (r) => {
         if (!this.destroyed) this.team = r.listData;
@@ -50,6 +60,11 @@ export class JobBoardComponent implements OnInit, OnDestroy {
       },
     });
     this.routeChanges = this.route.queryParamMap.subscribe((params) => {
+      this.archived = params.get('archived') === 'true';
+      this.complete = this.router.url.startsWith('/completed') || params.get('complete') === 'true';
+      this.scope = params.get('scope') || '';
+      this.dueSoon = params.get('dueSoon') === 'true';
+      this.label = params.get('label') || '';
       this.search = (params.get('search') || '').slice(0, 200);
       this.assignee = params.get('assignee') || '';
       this.priority = params.get('priority') || '';
@@ -76,6 +91,11 @@ export class JobBoardComponent implements OnInit, OnDestroy {
   /** Accepts no input; stores filters in the URL so reload, bookmarks and Back restore the current search. */
   applyFilters() {
     const queryParams = {
+      archived: this.archived || null,
+      complete: this.complete || null,
+      scope: this.scope || null,
+      dueSoon: this.dueSoon || null,
+      label: this.label || null,
       search: this.search || null,
       assignee: this.assignee || null,
       priority: this.priority || null,
@@ -100,6 +120,10 @@ export class JobBoardComponent implements OnInit, OnDestroy {
       .get<any>('/api/jobs', {
         params: {
           complete: this.complete,
+          archived: this.archived,
+          scope: this.scope,
+          dueSoon: this.dueSoon,
+          label: this.label,
           limit: 30,
           offset: append ? this.jobs.length : 0,
           search: this.search,
@@ -114,6 +138,7 @@ export class JobBoardComponent implements OnInit, OnDestroy {
         next: (r) => {
           this.jobs = append ? [...this.jobs, ...r.listData] : r.listData;
           this.total = r.total;
+          this.today = r.today;
           this.loading = false;
         },
         error: (e) => {
@@ -124,6 +149,7 @@ export class JobBoardComponent implements OnInit, OnDestroy {
   }
   /** Accepts no input; toggles the signed-in user's assignments and immediately applies the filter. */
   mine() {
+    this.scope = '';
     this.assignee =
       this.assignee === this.users.userInfo?.id
         ? ''
@@ -142,6 +168,8 @@ export class JobBoardComponent implements OnInit, OnDestroy {
     this.lane = '';
     this.overdue = false;
     this.attention = false;
+    this.scope = this.label = '';
+    this.dueSoon = false;
     this.filterChanged();
   }
   /** Accepts an index and job; returns stable identity to preserve row controls during refresh. */
@@ -159,14 +187,24 @@ export class JobBoardComponent implements OnInit, OnDestroy {
   done(job: any) {
     return (job.taskList || []).filter((item) => item.done).length;
   }
-  /** Accepts a job; returns whether its date-only deadline has passed using the API's UTC date convention. */
+  /** Accepts a job; returns whether its deadline has passed using the API's workspace-local Today. */
   isOverdue(job: any) {
     return (
       !job.isComplete &&
       job.dueDate &&
-      job.dueDate < new Date().toISOString().slice(0, 10)
+      this.today && job.dueDate < this.today
     );
   }
+  /** Accepts no input; returns whether the current list is filtered rather than an empty workspace view. */
+  get filtered() { return !!(this.search || this.assignee || this.priority || this.lane || this.label || this.scope || this.overdue || this.attention || this.dueSoon); }
+  /** Accepts no input; stores the current URL filters as a private named view for this account. */
+  async saveView() {
+    if (!this.viewName.trim()) return;
+    try { const result = await firstValueFrom(this.http.post<any>('/api/views', { name: this.viewName, query: this.router.url.split('?')[1] || (this.complete ? 'complete=true' : '') })); this.views = result.listData; this.viewName = ''; }
+    catch (e: any) { this.error = e.error?.message || 'Could not save view.'; }
+  }
+  /** Accepts a private view; restores its supported filters through the same bookmarkable Jobs route. */
+  openView(view: any) { void this.router.navigateByUrl('/jobs' + (view.query ? '?' + view.query : '')); }
   /** Accepts a job and status; persists the versioned change then reloads the current search. */
   async move(job: any, lane: string) {
     if (this.saving) return;
@@ -188,6 +226,17 @@ export class JobBoardComponent implements OnInit, OnDestroy {
     } finally {
       this.saving = '';
     }
+  }
+  /** Accepts an archived job; restores its version to Planned and retains any conflict as a visible error. */
+  async restore(job: any) {
+    if (this.saving || job.customerArchived) return;
+    this.saving = job.jobSlug;
+    this.error = '';
+    try {
+      await firstValueFrom(this.http.post('/api/jobs/' + job.jobSlug + '/restore', { version: job.version }));
+      if (!this.destroyed) this.load();
+    } catch (e: any) { this.error = e.error?.message || 'Could not restore this job.'; }
+    finally { this.saving = ''; }
   }
   /** Accepts a job and checklist item; persists only the toggled checklist and merges the confirmed version without collapsing details. */
   async toggleTask(job: any, task: any) {

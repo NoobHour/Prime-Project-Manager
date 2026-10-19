@@ -1,6 +1,7 @@
 <section class="discussion" [attr.aria-label]="combined ? 'Customer discussions' : jobSlug ? 'Job discussion' : 'Discussion'">
   <div class="board-filter" *ngIf="combined"><label>Show messages<select class="form-control" [(ngModel)]="filter" (ngModelChange)="filterChanged()" [disabled]="busy || editing"><option value="all">All customer &amp; job boards</option><option value="general">Customer general</option><option *ngFor="let job of jobs" [value]="job.jobSlug">{{ job.name }}</option></select></label></div>
   <header class="discussion-heading">
+    <button *ngIf="linkedMessage" type="button" class="btn btn-outline-primary" (click)="showLatest()">Show latest messages</button>
     <span>{{ total }} {{ total === 1 ? 'message' : 'messages' }}</span
     ><button
       type="button"

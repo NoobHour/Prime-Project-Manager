@@ -330,3 +330,9 @@ input[type='file']::file-selector-button {
 .text-danger {
   color: #ffb4aa !important;
 }
+/* Native disclosures keep the compact navigation usable by keyboard and on narrow screens. */
+[hidden] { display: none !important; }
+.create-menu, .account-menu { position: relative; }
+.menu-options { position: absolute; right: 0; z-index: 1100; min-width: 12rem; padding: .75rem; background: #20262e; border: 1px solid #465366; border-radius: .4rem; box-shadow: 0 6px 18px #0006; }
+.menu-options a { display: block; padding: .6rem; }
+.workspace-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem; }

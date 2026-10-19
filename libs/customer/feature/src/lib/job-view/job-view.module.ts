@@ -7,8 +7,10 @@ import { FileUtilModule } from '../file-util/file-util.module';
 import { ViewCommentsModule } from '../view-comments/view-comments.module';
 import { JobViewComponent } from './job-view.component';
 
-/** Accepts the routed job component; returns whether its pending changes can be left safely. */
-export function canLeaveJob(component: JobViewComponent) {
+/** Accepts the routed job and router states; protects record changes while allowing mounted resource switches. */
+export function canLeaveJob(component: JobViewComponent, _route?: any, currentState?: any, nextState?: any) {
+  // Resource and calendar query changes reuse the same mounted editors; only leaving their record risks losing drafts.
+  if (!component.creating && currentState && nextState && currentState.url.split('?')[0] === nextState.url.split('?')[0]) return true;
   return component.canLeave();
 }
 

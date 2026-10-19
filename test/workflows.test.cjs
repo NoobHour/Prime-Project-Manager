@@ -133,6 +133,9 @@ test('PPM application workflows', async (t) => {
         }),
       );
       assert.equal(admin.role, 'admin');
+      const workspace = (await json(await request('GET', '/workspace'))).data;
+      await json(await request('GET', '/jobs?overdue=true'), 409);
+      await json(await request('PUT', '/workspace', { ...workspace, timezone: 'UTC' }));
       await json(await request('POST', '/setup', {}), 409);
     },
   );
@@ -227,6 +230,7 @@ test('PPM application workflows', async (t) => {
           await request('PUT', '/customers/jobs/' + job.jobSlug, {
             ...job,
             lane: 'complete',
+            isActive: false,
             isComplete: true,
           }),
         )
@@ -637,7 +641,8 @@ test('PPM application workflows', async (t) => {
   await t.test(
     'customer archival preserves history and can be restored',
     async () => {
-      await json(await request('DELETE', '/customers/' + customer.slug));
+      const current = (await json(await request('GET', '/customers/' + customer.slug))).detailData;
+      await json(await request('DELETE', '/customers/' + customer.slug, { version: current.version }));
       assert.equal(
         (await json(await request('GET', '/customers?isArchived=true'))).total,
         1,
@@ -824,9 +829,115 @@ test('PPM application workflows', async (t) => {
     await json(await request('POST', '/jobs', { customerSlug: customer.slug, customer: { name: 'Ambiguous' }, job: fields }), 400);
     await json(await request('POST', '/jobs', { job: fields }), 400);
     await json(await request('POST', '/jobs', { customerSlug: 'missing', job: fields }), 404);
-    await json(await request('DELETE', '/customers/' + owner.slug));
+    await json(await request('DELETE', '/customers/' + owner.slug, { version: owner.version }));
     await json(await request('POST', '/jobs', { customerSlug: owner.slug, job: fields }), 409);
     assert.equal((await json(await request('GET', '/customers'))).total, count);
+  });
+  /** Accepts no input; proves internal projects own independent resources and use the same versioned lifecycle. */
+  await t.test('internal projects support scoped resources, archive and restore without a customer', async () => {
+    const customersBefore = (await json(await request('GET', '/customers'))).total;
+    let work = (await json(await request('POST', '/jobs', { workKind: 'internal', job: { name: 'Office move', lane: 'planned', labels: ['Office', 'office'] } }), 201)).data;
+    assert.equal(work.customerSlug, null);
+    assert.deepEqual(work.labels, ['office']);
+    assert.equal((await json(await request('GET', '/customers'))).total, customersBefore);
+    await json(await request('POST', '/jobs', { workKind: 'internal', customerSlug: customer.slug, job: { name: 'Ambiguous' } }), 400);
+    await json(await request('PUT', '/customers/jobs/' + work.jobSlug, { ...work, lane: 'active', isActive: false }), 400);
+    const note = (await json(await request('POST', `/jobs/${work.jobSlug}/comments`, { body: '<p>Floor plan review</p>' }), 201)).data;
+    assert.equal(note.jobSlug, work.jobSlug);
+    const visit = (await json(await request('POST', `/jobs/${work.jobSlug}/calendar`, { subject: 'Move weekend', start: '2026-11-06T00:00:00Z', end: '2026-11-10T00:00:00Z' }), 201)).data;
+    const bytes = Buffer.from('Internal floor plan');
+    const attachment = (await json(await request('POST', `/jobs/${work.jobSlug}/files`, upload(bytes, 'floor-plan.txt', 'document')), 201)).data;
+    assert.deepEqual(Buffer.from(await (await request('GET', `/files/${attachment.id}/download`)).arrayBuffer()), bytes);
+    assert.equal((await json(await request('GET', `/jobs/${work.jobSlug}/files`))).total, 1);
+    assert.equal((await json(await request('GET', `/jobs/${work.jobSlug}/comments`))).total, 1);
+    assert.equal((await json(await request('GET', `/jobs/${work.jobSlug}/calendar`))).total, 1);
+    assert.equal((await json(await request('GET', `/jobs/${work.jobSlug}/comments?id=${note.id}`))).listData[0].id, note.id);
+    assert.equal((await json(await request('GET', `/jobs/${work.jobSlug}/comments?id=missing`))).total, 0);
+    assert.equal((await json(await request('GET', `/jobs/${work.jobSlug}/files?id=${attachment.id}`))).total, 1);
+    assert.equal((await json(await request('GET', `/jobs/${work.jobSlug}/files?id=${file.id}`))).total, 0);
+    assert.equal((await json(await request('GET', `/jobs/${work.jobSlug}/calendar?id=${visit.calendarSlug}`))).total, 1);
+    assert.equal((await json(await request('GET', `/jobs/${work.jobSlug}/calendar?from=2026-11-07T00:00:00Z&to=2026-11-08T00:00:00Z`))).total, 1);
+    assert.equal((await json(await request('GET', `/jobs/${work.jobSlug}/calendar?from=2026-12-07T00:00:00Z&to=2026-12-08T00:00:00Z`))).total, 0);
+    await json(await request('GET', `/jobs/${work.jobSlug}/calendar?from=2026-01-01T00:00:00Z&to=2027-01-01T00:00:00Z`), 400);
+    await json(await request('PUT', `/calendar/${visit.calendarSlug}`, { ...visit, jobSlug: '' }), 400);
+    await json(await request('POST', `/jobs/${work.jobSlug}/comments`, { body: 'Bad scope', jobSlug: job.jobSlug }), 400);
+    await json(await request('POST', `/customers/${customer.slug}/calendar`, { ...visit, jobSlug: work.jobSlug }), 400);
+    await json(await request('POST', `/jobs/${work.jobSlug}/files/download`, { ids: [file.id] }), 404);
+    await json(await request('PUT', `/files/${attachment.id}`, { ...attachment, jobSlug: '' }), 400);
+    const overlap = await json(await request('GET', `/schedule?from=2026-11-07T00:00:00Z&to=2026-11-08T00:00:00Z&jobSlug=${work.jobSlug}`));
+    assert.equal(overlap.total, 1);
+    assert.equal(overlap.listData[0].id, visit.calendarSlug);
+    await json(await request('GET', '/schedule?from=2026-01-01T00:00:00Z&to=2027-01-01T00:00:00Z'), 400);
+    const previous = work.version;
+    work = (await json(await request('DELETE', '/customers/jobs/' + work.jobSlug, { version: work.version }))).data;
+    assert.equal(work.isArchived, true);
+    assert.equal(work.isActive, false);
+    assert.equal(work.isComplete, false);
+    await json(await request('POST', `/jobs/${work.jobSlug}/restore`, { version: previous }), 409);
+    assert.ok((await json(await request('GET', '/jobs?archived=true'))).listData.some((row) => row.jobSlug === work.jobSlug));
+    work = (await json(await request('POST', `/jobs/${work.jobSlug}/restore`, { version: work.version }), 201)).data;
+    assert.equal(work.lane, 'planned');
+    assert.deepEqual(Buffer.from(await (await request('GET', `/files/${attachment.id}/download`)).arrayBuffer()), bytes);
+  });
+  /** Accepts no input; checks explicit parent archival, preserved job status and blocked restoration beneath an archived customer. */
+  await t.test('archived customer jobs are globally discoverable and require parent restoration', async () => {
+    const parent = (await json(await request('POST', '/customers', { name: 'Archive example', isActive: true }), 201)).data;
+    let work = (await json(await request('POST', '/jobs', { customerSlug: parent.slug, job: { name: 'Keep original state', lane: 'active' } }), 201)).data;
+    await json(await request('DELETE', `/customers/${parent.slug}`, { version: parent.version - 1 }), 409);
+    await json(await request('DELETE', `/customers/${parent.slug}`, { version: parent.version }));
+    assert.equal((await json(await request('GET', `/customers/jobs/${work.jobSlug}`))).detailData.lane, 'active');
+    const hidden = (await json(await request('GET', '/jobs?archived=true'))).listData.find((row) => row.jobSlug === work.jobSlug);
+    assert.equal(hidden.customerArchived, true);
+    work = (await json(await request('DELETE', `/customers/jobs/${work.jobSlug}`, { version: work.version }))).data;
+    await json(await request('POST', `/jobs/${work.jobSlug}/restore`, { version: work.version }), 409);
+  });
+  /** Accepts no input; verifies template isolation, safe duplication, private view normalization and metadata search. */
+  await t.test('templates and duplicate previews create independent work without copying resources', async () => {
+    let template = (await json(await request('GET', '/templates/service'))).data;
+    template = (await json(await request('PUT', '/templates/service', { ...template, name: 'Reviewed service visit' }))).data;
+    await json(await request('PUT', '/templates/service', { ...template, version: template.version - 1 }), 409);
+    const preview = (await json(await request('GET', `/jobs/${job.jobSlug}/duplicate`))).data;
+    assert.equal(preview.assigneeId, '');
+    assert.equal(preview.dueDate, '');
+    assert.ok(preview.taskList.every((step) => !step.done && !(job.taskList || []).some((old) => old.id === step.id)));
+    assert.equal(preview.customerSlug, undefined);
+    const copy = (await json(await request('POST', '/jobs', { workKind: 'internal', job: preview }), 201)).data;
+    assert.equal((await json(await request('GET', `/jobs/${copy.jobSlug}/files`))).total, 0);
+    assert.equal((await json(await request('GET', `/jobs/${copy.jobSlug}/comments`))).total, 0);
+    assert.equal((await json(await request('GET', `/jobs/${copy.jobSlug}/calendar`))).total, 0);
+    const views = await json(await request('POST', '/views', { name: 'My labels', query: 'label=office&archived=true&unsupported=secret' }), 201);
+    assert.equal(views.listData[0].query, 'archived=true&label=office');
+    const search = await json(await request('GET', '/search?q=floor-plan&limit=1'));
+    assert.equal(search.listData[0].type, 'file');
+    assert.ok(search.listData[0].jobSlug);
+    assert.equal(search.listData[0].content, undefined);
+  });
+  /** Accepts no input; verifies assignment delivery, follow scoping, coalescing, read isolation and role restrictions. */
+  await t.test('updates are per-user, coalesced and read independently for each job', async () => {
+    const reviewer = (await json(await request('POST', '/users', { username: 'Updates Reviewer', email: 'updates@example.test', password: 'Testing-Updates-2026!' }), 201)).data;
+    const first = (await json(await request('POST', '/jobs', { workKind: 'internal', job: { name: 'Assigned work one', assigneeId: reviewer.id } }), 201)).data;
+    const second = (await json(await request('POST', '/jobs', { workKind: 'internal', job: { name: 'Assigned work two', assigneeId: reviewer.id } }), 201)).data;
+    const previousCookie = cookie, previousToken = token;
+    await session(await request('POST', '/users/login', { email: 'updates@example.test', password: 'Testing-Updates-2026!' }));
+    const firstInbox = await json(await request('GET', '/updates'));
+    assert.equal(firstInbox.total, 2);
+    assert.equal((await json(await request('GET', '/views'))).listData.length, 0);
+    await json(await request('PUT', '/workspace', { timezone: 'UTC', terminology: 'jobs', version: 1 }), 403);
+    await json(await request('PUT', `/jobs/${first.jobSlug}/follow`, { following: true }));
+    const firstUpdate = firstInbox.listData.find((row) => row.jobSlug === first.jobSlug);
+    await json(await request('POST', `/jobs/${first.jobSlug}/read`, { sequence: firstUpdate.sequence }), 201);
+    assert.equal((await json(await request('GET', '/updates'))).listData[0].jobSlug, second.jobSlug);
+    const reviewerCookie = cookie, reviewerToken = token;
+    cookie = previousCookie; token = previousToken;
+    await json(await request('POST', `/jobs/${first.jobSlug}/comments`, { body: 'Update one' }), 201);
+    await json(await request('POST', `/jobs/${first.jobSlug}/comments`, { body: 'Update two' }), 201);
+    cookie = reviewerCookie; token = reviewerToken;
+    const inbox = await json(await request('GET', '/updates'));
+    assert.equal(inbox.listData.find((row) => row.kind === 'message').count, 2);
+    assert.deepEqual((await json(await request('GET', '/updates'))).listData, inbox.listData);
+    cookie = previousCookie; token = previousToken;
+    await json(await request('PUT', '/staff/' + reviewer.id, { active: false }));
+    await json(await request('GET', '/updates', null, { Cookie: reviewerCookie, 'X-CSRF-Token': reviewerToken }), 401);
   });
   await t.test('logout revokes old authentication cookies', async () => {
     await json(await request('POST', '/users/logout', {}), 201);

@@ -2,15 +2,15 @@
   <section class="attention-panel">
     <header>
       <div>
-        <span class="eyebrow">FOCUS FOR TODAY</span>
-        <h2>Needs attention</h2>
+        <span class="eyebrow">MY WORK</span>
+        <h2>Deadlines &amp; upcoming work</h2>
       </div>
       <span class="count">{{ total }}</span>
     </header>
     <p class="intro">
-      Urgent and overdue jobs. Everything else is on the Job Board.
+      Overdue work and deadlines in the next two weeks, using the workspace timezone.
     </p>
-    <p *ngIf="loading" role="status">Loading work…</p>
+    <p *ngIf="setupRequired">An administrator must <a routerLink="/workspace">choose the workspace timezone</a> before Today and upcoming work are available.</p><label *ngIf="!setupRequired">Work queue<select class="form-control" [(ngModel)]="scope" (ngModelChange)="ngOnInit()"><option value="mine">My assignments</option><option value="unassigned">Unassigned work</option><option *ngIf="users.userInfo?.role === 'admin'" value="">Team work</option></select></label><p *ngIf="loading" role="status">Loading work…</p>
     <p *ngIf="error" role="alert">{{ error }}</p>
     <a
       *ngFor="let job of jobs"
@@ -22,28 +22,29 @@
       </div>
       <div class="job-reason">
         <span [class.overdue]="isOverdue(job)">{{
-          isOverdue(job) ? 'Overdue' : (job.priority | titlecase)
+          isOverdue(job) ? 'Overdue' : job.dueDate === today ? 'Today' : 'Upcoming'
         }}</span
         ><small>{{
           job.dueDate ? (job.dueDate | date: 'MMM d' : 'UTC') : 'No due date'
         }}</small>
       </div></a
     >
-    <div class="empty" *ngIf="!loading && !error && !jobs.length">
-      <h4>Nothing urgent right now</h4>
+    <div class="empty" *ngIf="!loading && !error && !setupRequired && !jobs.length">
+      <h4>No deadlines in this queue</h4>
       <p>Check the board for upcoming work and assignments.</p>
     </div>
     <footer>
-      <a routerLink="/jobs" [queryParams]="{ attention: 'true' }"
-        >View all {{ total }} needing attention →</a
+      <a routerLink="/jobs" [queryParams]="{ scope: scope, dueSoon: 'true' }"
+        >View all {{ total }} upcoming jobs →</a
       ><a routerLink="/jobs">Open Job Board</a>
-    </footer>
+    </footer><section *ngIf="appointments.length"><h3>Team appointments · Next 7 days</h3><a *ngFor="let appointment of appointments" class="attention-job" [routerLink]="appointment.jobSlug ? ['/job',appointment.jobSlug] : ['/customer',appointment.customerSlug]" [queryParams]="{resource:'calendar',appointment:appointment.id}"><strong>{{ appointment.title }}</strong><span>{{ time(appointment.start) }}</span></a><a routerLink="/schedule">Open shared Schedule →</a></section>
   </section>
   <section class="team-panel">
     <header>
       <span class="eyebrow">TEAM UPDATES</span>
       <h2>Team Board</h2>
     </header>
-    <view-comments slug="__team__"></view-comments>
+    <view-comments #teamDiscussion slug="__team__"></view-comments>
   </section>
 </div>
+

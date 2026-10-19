@@ -3,7 +3,7 @@
     <label>Search files<input class="form-control" type="search" name="search" [(ngModel)]="search" maxlength="200" placeholder="Filename…" /></label>
     <label>Filter by tag<select class="form-control" name="tag" [(ngModel)]="activeTag" (ngModelChange)="load()"><option value="">All tags</option><option *ngFor="let tag of availableTags" [value]="tag">{{ tag }}</option></select></label>
     <button class="btn btn-outline-primary" type="submit">Apply filters</button>
-    <button class="btn btn-outline-primary" type="button" (click)="clearFilters()" [disabled]="!search && !activeTag">Clear filters</button>
+    <button class="btn btn-outline-primary" type="button" (click)="clearFilters()" [disabled]="!search && !activeTag && !linkedFile">{{ linkedFile ? 'Show all files' : 'Clear filters' }}</button>
   </form>
   <p class="file-count" role="status">{{ total }} {{ total === 1 ? 'file' : 'files' }}{{ activeTag ? ' tagged '+activeTag : '' }}</p>
   <div class="upload-settings">
@@ -21,11 +21,11 @@
     <h5>Edit file details</h5>
     <fieldset [disabled]="busy">
       <label class="d-block">Filename<input class="form-control" name="name" [(ngModel)]="editing.name" required maxlength="200" /></label>
-      <label class="d-block">Job<select class="form-control" name="job" [(ngModel)]="editing.jobSlug"><option value="">Customer (general)</option><option *ngFor="let job of jobs" [value]="job.jobSlug">{{ job.name }}</option></select></label>
-      <label class="d-block">Category<select class="form-control" name="category" [(ngModel)]="editing.category"><option value="document">Documents</option><option value="photo">Photos</option><option value="avatar">Avatar</option><option value="misc">Miscellaneous</option></select></label>
+      <label *ngIf="customer" class="d-block">Job<select class="form-control" name="job" [(ngModel)]="editing.jobSlug"><option value="">Customer (general)</option><option *ngFor="let job of jobs" [value]="job.jobSlug">{{ job.name }}</option></select></label>
+      <label class="d-block">Category<select class="form-control" name="category" [(ngModel)]="editing.category"><option value="document">Documents</option><option value="photo">Photos</option><option *ngIf="customer" value="avatar">Avatar</option><option value="misc">Miscellaneous</option></select></label>
       <div class="tag-editor"><label>Add file tag<input class="form-control" name="editTag" [(ngModel)]="editTag" maxlength="200" (keydown.enter)="$event.preventDefault(); addTag('edit')" /></label><button class="btn btn-outline-primary" type="button" [disabled]="!editTag.trim()" (click)="addTag('edit')">Add file tag</button></div>
       <div class="tag-chips"><button *ngFor="let tag of editing.tags" type="button" class="tag-chip" [attr.aria-label]="'Remove file tag '+tag" (click)="removeTag('edit',tag)">{{ tag }} ×</button></div>
-      <div class="file-actions"><button type="submit" class="btn btn-primary" [disabled]="fileForm.invalid || !editing.name.trim()">{{ busy ? 'Saving…' : 'Save file' }}</button><button type="button" class="btn btn-outline-primary" (click)="editing = null">Cancel</button></div>
+      <div class="file-actions"><button type="submit" class="btn btn-primary" [disabled]="fileForm.invalid || !editing.name.trim()">{{ busy ? 'Saving…' : 'Save file' }}</button><button type="button" class="btn btn-outline-primary" (click)="cancelEdit()">Cancel</button></div>
     </fieldset>
   </form>
   <p class="mt-3">Images can be viewed here or opened at full size. Maximum 10 MB per file; 2 MB for an avatar.</p>
@@ -52,3 +52,4 @@
   <p *ngIf="!loading && !error && !files.length">{{ search || activeTag ? 'No files match these filters.' : 'No files uploaded.' }}</p>
   <button type="button" class="btn btn-outline-primary" *ngIf="files.length < total" [disabled]="loading" (click)="load(true)">Load more files</button>
 </div>
+

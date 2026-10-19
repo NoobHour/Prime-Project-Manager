@@ -15,6 +15,8 @@ const routes: Routes = [
     path: '',
     component: LayoutComponent,
     children: [
+      // These destinations share bounded search/list controls but keep their state in their own URLs.
+      ...['schedule', 'workspace', 'templates', 'search', 'updates'].map((path) => ({ path, loadChildren: () => import('@mgmt/customer/feature').then((m) => m.WorkspaceModule), canActivate: [AuthGuardService] })),
       {
         path: 'job/:jobSlug',
         loadChildren: () => import('@mgmt/customer/feature').then((m) => m.JobViewModule),

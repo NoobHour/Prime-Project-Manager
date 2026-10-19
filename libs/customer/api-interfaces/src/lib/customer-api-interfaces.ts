@@ -69,7 +69,16 @@ export abstract class INewComment {
 }
 
 export abstract class IJob extends IBase {
-  customerSlug: string;
+  // Internal work has no customer at the API boundary; legacy orphans remain customer work.
+  customerSlug: string | null;
+  workKind: 'customer' | 'internal';
+  labels: string[];
+  lane: 'planned' | 'active' | 'complete' | 'archived';
+  assigneeId: string;
+  priority: 'low' | 'normal' | 'high' | 'urgent';
+  dueDate: string;
+  taskList: { id: string; title: string; done: boolean }[];
+  body: string;
   jobSlug: string;
   isActive: boolean;
   isComplete: boolean;
@@ -78,9 +87,27 @@ export abstract class IJob extends IBase {
 }
 
 export abstract class INewJob {
-  customerSlug: string;
+  customerSlug?: string;
   name: string;
 }
+
+/** Creation chooses exactly one relationship; the server validates all planning fields and creates the pair atomically. */
+export type ICreateJobWorkspace = {
+  job: Pick<IJob, 'name'> & Partial<Pick<IJob, 'body' | 'lane' | 'assigneeId' | 'priority' | 'dueDate' | 'taskList' | 'labels'>>;
+} & (
+  { customerSlug: string; customer?: never; workKind?: 'customer' } |
+  { customer: Partial<INewCustomer> & { name: string }; customerSlug?: never; workKind?: 'customer' } |
+  { workKind: 'internal'; customerSlug?: never; customer?: never }
+);
+
+/** Persisted workspace policy; an empty timezone means an administrator still needs to complete setup. */
+export interface IWorkspaceSettings { id: number; timezone: string; terminology: 'jobs' | 'projects'; version: number; }
+
+/** Templates contain reusable planning data only; resources and customer history never belong to a template. */
+export interface IWorkTemplate { id: string; name: string; body: string; priority: IJob['priority']; checklist: string[]; dueOffset: number | null; version: number; }
+
+/** Agenda deadlines are date-only values; appointment starts/ends are ISO instants. */
+export interface IAgendaEntry { type: 'appointment' | 'deadline'; id: string; title: string; start: string; end: string; allDay: number; jobSlug: string; customerSlug: string; jobName: string; customerName: string; }
 
 export abstract class IUpdateJob {
   customerSlug: string;
@@ -93,6 +120,7 @@ export abstract class IUpdateJob {
 }
 
 export abstract class ICalendar extends IBase {
+  jobSlug: string;
   customerSlug: string;
   calendarSlug: string;
   authorId: string;

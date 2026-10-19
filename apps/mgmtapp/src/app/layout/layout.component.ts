@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { Component } from '@angular/core';
+import { Component, HostListener } from '@angular/core';
 import { IUserService } from '@mgmt/user/shared';
 import { MenuItem } from 'primeng/api';
 
@@ -34,27 +34,28 @@ export class LayoutComponent {
       error: () => {},
     });
     this.items = [
-      { label: 'Home', icon: 'pi pi-fw pi-home', routerLink: '/' },
-      { label: 'Team', icon: 'pi pi-users', routerLink: '/team' },
-      { label: 'New Job', routerLink: '/job/new', icon: 'pi pi-plus' },
-      { label: 'Job Board', routerLink: '/jobs', icon: 'pi pi-fw pi-calendar' },
+      { label: 'My work', icon: 'pi pi-fw pi-home', routerLink: '/' },
+      { label: 'Jobs', routerLink: '/jobs', icon: 'pi pi-fw pi-calendar' },
       {
-        label: 'New Customer',
-        icon: 'pi pi-fw pi-file',
-        routerLink: '/editor',
-      },
-      {
-        label: 'Completed Jobs',
-        routerLink: '/completed',
-        icon: 'pi pi-fw pi-calendar',
-      },
-      {
-        label: 'Customer List',
+        label: 'Customers',
         icon: 'pi pi-fw pi-calendar',
         routerLink: '/customers',
       },
+      { label: 'Team', icon: 'pi pi-users', routerLink: '/team' },
+      { label: 'Schedule', icon: 'pi pi-calendar', routerLink: '/schedule' },
+      { label: 'Updates', icon: 'pi pi-bell', routerLink: '/updates' },
+      { label: 'Search', icon: 'pi pi-search', routerLink: '/search' },
     ];
 
     this.activeItem = this.items[0];
+    this.applyTerminology();
+  }
+  /** Accepts no input; applies the persisted terminology preset to primary navigation. */
+  @HostListener('window:workspace-settings-changed')
+  applyTerminology() {
+    this.http.get<any>('/api/workspace').subscribe({
+      next: (result) => { const projects = result.data.terminology === 'projects'; for (const item of this.items) { if (item.routerLink === '/jobs') item.label = projects ? 'Projects' : 'Jobs'; if (item.routerLink === '/customers') item.label = projects ? 'Contacts' : 'Customers'; } },
+      error: () => {},
+    });
   }
 }

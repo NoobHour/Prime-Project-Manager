@@ -1,6 +1,6 @@
 # Prime Project Manager (PPM)
 
-A local project manager for individual teams. Keep customers, jobs, deadlines, checklists, appointments, files and team conversations in one dark-themed workspace.
+A local project manager for small teams. Keep customer jobs, internal projects, deadlines, checklists, appointments, files and team conversations in one dark-themed workspace.
 
 Built with Angular, NestJS and SQLite through TypeORM/sql.js. The frontend and API run together in a single Node.js process; no separate database service is needed.
 
@@ -12,23 +12,29 @@ PPM is intended for small teams that want a self-hosted customer and job workspa
 
 - **Job planning:** owners, priorities, deadlines, status changes, completed work and checklists. Filter by owner, priority, status or overdue work; bookmark the filtered URL. Complete checklist items directly on the board.
 
-- **Job workspace:** open any job for its own editor, rich scope notes, checklist, customer contact card and related jobs. Use **Job discussion**, **Job calendar** and **Job files** tabs to switch resources without losing their drafts or filters. Version checks preserve unsaved edits on conflicts; leaving warns before discarding job edits or message drafts.
+- **Job workspace:** open any job for its own editor, rich scope notes, checklist, customer contact card and related jobs. Use **Job discussion**, **Job calendar** and **Job files** tabs to switch resources without losing their drafts or filters. Version checks preserve unsaved edits on conflicts; leaving protects job edits, messages, appointments and file metadata, and blocks pending writes.
 
-- **Dashboard:** urgent and overdue work alongside a shared team discussion.
+- **My work:** assigned deadlines, overdue work, an unassigned queue and upcoming shared appointments alongside team discussion.
 
 - **Discussions:** a board for each job, a customer general board and a shared team board. Customer views combine that customer's job and general messages with board labels, filters and explicit posting destinations. Includes author profiles, editing, older history, independent board drafts and automatic refresh. Enter sends; Shift+Enter adds a line.
 
-- **Calendar:** customer and job appointments with month, week and day views, local-time entry and validation.
+- **Schedule:** a shared agenda with customer/project filters, computed deadlines and month, week and day views. Explicit workspace timezone settings keep appointment entry and Today consistent, including daylight-saving validation.
 
 - **Files:** customer-wide or job-specific protected uploads, image previews, downloads, categories, multiple tags, filename search, tag filtering and selected-file ZIP downloads.
 
 - **Team:** administrator-created accounts, profiles, staff access controls and assigned-work links.
 
-Open a job title on the Job Board or dashboard to use its workspace. Edit the job and checklist, contact or edit its customer, switch to related work, and use the resource tabs for that job's discussion, appointments and attachments. The editor and customer card remain above the tabs. Tab switches keep each resource mounted, preserving its in-page state. Arrow keys, Home and End navigate the tab bar.
+Open a job title on the Job Board or dashboard to use its workspace. Edit the job and checklist, contact or edit its customer, switch to related work, and use the resource tabs for that job's discussion, appointments and attachments. A compact summary opens above the tabs; expand Edit job details or customer contact details when needed. Tab switches keep each resource mounted, preserving its in-page state. Arrow keys, Home and End navigate the tab bar.
 
 The customer overview brings all that customer's job boards together with general customer messages. Each message belongs to one board and appears once in the combined feed. Use **Show messages** to narrow the feed, **Post to** to choose a destination, or **Reply on this board** to direct the composer to a message's board. Switching destinations preserves separate unsent drafts until you leave the page; navigation warns before discarding them.
 
 Customer-wide appointments and files stay in the customer overview; choose a job under **Attach to** to associate an existing appointment, or **Edit details** to associate a file. Add tags when uploading or editing file details, then click a tag or select **Filter by tag**. Combine a tag with **Search files** to narrow filenames. Tags are normalized to lowercase and deduplicated, with up to 20 tags per file. Existing virtual-folder labels become tags on upgrade; stored file bytes and existing general customer messages are preserved.
+
+## Workspace workflows
+
+Create internal projects without a customer, preview editable templates or duplicate existing work with fresh checklist steps. Add project labels, save private board views, and search customer fields, job titles and file metadata. Follow jobs for a coalesced Updates inbox and structured status, owner and deadline history. Archived work is globally discoverable and deliberately restorable.
+
+An administrator must confirm the workspace timezone in Account → Workspace settings before using My work and Schedule. See [Workspace workflows](docs/WORKSPACE-WORKFLOWS.md) for daily use, scope rules, legacy status auditing and the full backup/restore upgrade procedure.
 
 ## Quick start
 

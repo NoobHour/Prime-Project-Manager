@@ -1,4 +1,5 @@
 import { PlanningFields1790700000000 } from '@mgmt/shared/api/config/src/lib/migrations/planning-fields';
+import { WorkspaceWorkflows1792200000000 } from '@mgmt/shared/api/config/src/lib/migrations/workspace-workflows';
 import { JobCalendar1790800000000 } from '@mgmt/shared/api/config/src/lib/migrations/job-calendar';
 import { JobDiscussionsFileTags1790900000000 } from '@mgmt/shared/api/config/src/lib/migrations/job-discussions-file-tags';
 import { Module } from '@nestjs/common';
@@ -26,7 +27,7 @@ import {
       type: 'sqljs',
       location: runtime.database,
       autoSave: true,
-      migrations: [PlanningFields1790700000000, JobCalendar1790800000000, JobDiscussionsFileTags1790900000000],
+      migrations: [PlanningFields1790700000000, JobCalendar1790800000000, JobDiscussionsFileTags1790900000000, WorkspaceWorkflows1792200000000],
       migrationsRun: true,
       autoSaveCallback: persistDatabase,
       entities: [User, Customer, Job, Calendar, Comment, FileSys, Upload],

@@ -13,8 +13,11 @@ import { DividerModule } from 'primeng/divider';
 import { ButtonModule } from 'primeng/button';
 import { FileUploadModule } from 'primeng/fileupload';
 
-/** Accepts the routed customer view; returns whether navigation can discard its discussion drafts. */
-export function canLeaveCustomer(component: ViewCustomerComponent) { return component.canLeave(); }
+/** Accepts the customer view and router states; protects record changes while allowing mounted resource switches. */
+export function canLeaveCustomer(component: ViewCustomerComponent, _route?: any, currentState?: any, nextState?: any) {
+  if (currentState && nextState && currentState.url.split('?')[0] === nextState.url.split('?')[0]) return true;
+  return component.canLeave();
+}
 
 @NgModule({
   imports: [
@@ -34,6 +37,7 @@ export function canLeaveCustomer(component: ViewCustomerComponent) { return comp
         path: '',
         component: ViewCustomerComponent,
         canDeactivate: [canLeaveCustomer],
+        runGuardsAndResolvers: 'always',
       },
     ]),
   ],

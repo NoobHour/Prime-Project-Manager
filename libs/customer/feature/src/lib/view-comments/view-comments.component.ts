@@ -43,9 +43,14 @@ export class ViewCommentsComponent implements OnInit, OnChanges, OnDestroy {
   ordered: any[] = [];
   private revision = 0;
   private draft = '';
+  linkedMessage = '';
   private editor: any;
   private refresh: any;
   private destroyed = false;
+  /** Accepts no input; returns the fixed job board endpoint or the customer/team discussion endpoint. */
+  get resourceUrl() { return this.jobSlug ? `/api/jobs/${this.jobSlug}/comments` : `/api/customers/${this.slug}/comments`; }
+  /** Accepts no input; clears all in-memory drafts after confirmed navigation, without sending a message. */
+  discardDraft() { this.boardDrafts.clear(); this.draft = ''; this.editing = null; this.commentForm.reset({ body: '' }); }
   /** Accepts route, transport, forms and current account; initializes the rich message composer. */
   constructor(
     private zone: NgZone,
@@ -81,6 +86,7 @@ export class ViewCommentsComponent implements OnInit, OnChanges, OnDestroy {
   }
   /** Accepts no input; invalidates old reads and opens the current board with a clean composer and independent draft cache. */
   private resetContext() {
+    this.linkedMessage = this.route.snapshot.queryParamMap?.get('message') || '';
     this.revision++;
     this.loading = false;
     this.comments = this.ordered = [];
@@ -200,8 +206,9 @@ export class ViewCommentsComponent implements OnInit, OnChanges, OnDestroy {
     const top = element?.scrollTop || 0;
     try {
       const res = await firstValueFrom(
-        this.http.get<any>(`/api/customers/${this.slug}/comments`, {
+        this.http.get<any>(this.resourceUrl, {
           params: { limit: 50, offset: append ? this.comments.length : 0,
+            ...(this.linkedMessage ? { id: this.linkedMessage } : {}),
             ...(this.jobSlug ? { jobSlug: this.jobSlug } : this.combined && this.filter !== 'all' ? { jobSlug: this.filter === 'general' ? '' : this.filter } : {}),
           },
         }),
@@ -228,6 +235,7 @@ export class ViewCommentsComponent implements OnInit, OnChanges, OnDestroy {
   /** Accepts a message; opens its existing formatting in the composer and preserves the unsent draft. */
   edit(message: any) {
     if (this.busy) return;
+    if (this.editing && this.commentForm.value.body !== this.editing.body && !confirm('Discard your changes to this message?')) return;
     if (!this.editing) {
       this.draft = this.commentForm.value.body || '';
       this.draftDestination = this.destination;
@@ -238,8 +246,13 @@ export class ViewCommentsComponent implements OnInit, OnChanges, OnDestroy {
     this.editor?.root.setAttribute('aria-label', 'Message for ' + this.boardName(this.destination));
     this.editor?.focus();
   }
-  /** Accepts no input; restores the draft that was present before editing a saved message. */
+  /** Accepts no input; protects unsaved edits before restoring the original composer draft. */
   cancelEdit() {
+    if (this.busy || (this.editing && this.commentForm.value.body !== this.editing.body && !confirm('Discard your changes to this message?'))) return;
+    this.restoreComposer();
+  }
+  /** Accepts no input; restores the pre-edit draft after a confirmed discard or successful write. */
+  private restoreComposer() {
     this.editing = null;
     this.destination = this.draftDestination;
     this.commentForm.patchValue({ body: this.draft });
@@ -258,7 +271,7 @@ export class ViewCommentsComponent implements OnInit, OnChanges, OnDestroy {
     this.hiddenSentBoard = null;
     const destination = this.destination;
     try {
-      const url = `/api/customers/${this.slug}/comments`;
+      const url = this.resourceUrl;
       const response: any = await firstValueFrom(
         this.editing
           ? this.http.put(`${url}/${this.editing.id}`, {
@@ -274,7 +287,7 @@ export class ViewCommentsComponent implements OnInit, OnChanges, OnDestroy {
             ? { ...message, ...response.data }
             : message,
         );
-        this.cancelEdit();
+        this.restoreComposer();
       } else {
         const visible = !this.combined || this.filter === 'all' || (this.filter === 'general' ? !destination : this.filter === destination);
         if (visible) {
@@ -302,15 +315,18 @@ export class ViewCommentsComponent implements OnInit, OnChanges, OnDestroy {
   }
   /** Accepts a message ID; confirms removal, clears its edit state and refreshes the conversation. */
   async deleteComment(id: string) {
-    if (!confirm('Remove this message?')) return;
+    if (this.busy || !confirm('Remove this message?')) return;
+    this.busy = true;
     try {
       await firstValueFrom(
-        this.http.delete(`/api/customers/${this.slug}/comments/${id}`),
+        this.http.delete(`${this.resourceUrl}/${id}`),
       );
-      if (this.editing?.id === id) this.cancelEdit();
+      if (this.editing?.id === id) this.restoreComposer();
       await this.loadComments();
     } catch (e) {
       this.error = e.error?.message || 'Cannot remove message.';
-    }
+    } finally { this.busy = false; }
   }
+  /** Accepts no input; returns from an exact linked message to the latest bounded discussion page. */
+  showLatest() { this.linkedMessage = ''; return this.loadComments(); }
 }

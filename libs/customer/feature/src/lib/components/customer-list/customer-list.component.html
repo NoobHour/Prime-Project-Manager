@@ -68,10 +68,11 @@
             <a
               [routerLink]="['/customer', customer.slug]"
               [state]="{ data: customer }"
+              [queryParams]="{returnTo: returnUrl}"
               >{{ customer.name }}</a
             >
           </td>
-          <td>{{ customer.phone || '—' }}</td>
+          <td><a *ngIf="customer.phone" [href]="'tel:' + customer.phone">{{ customer.phone }}</a><span *ngIf="!customer.phone">—</span></td>
           <td>
             <a
               *ngIf="customer.email; else noEmail"

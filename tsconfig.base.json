@@ -30,6 +30,7 @@
       "@mgmt/shared/client-server": ["libs/shared/client-server/src/index.ts"],
       "@mgmt/shared/constants": ["libs/shared/constants/src/index.ts"],
       "@mgmt/shared/common": ["libs/shared/common/src/index.ts"],
+      "@mgmt/shared/common/*": ["libs/shared/common/*"],
       "@mgmt/shared/configuration": ["libs/shared/configuration/src/index.ts"],
       "@mgmt/shared/directives": ["libs/shared/directives/src/index.ts"],
       "@mgmt/shared/error-handler": ["libs/shared/error-handler/src/index.ts"],

@@ -6,8 +6,10 @@
       <strong>{{ appointment.title }}</strong><span>{{ appointment.start | date:'MMM d, yyyy, h:mm a' }} – {{ appointment.end | date:'h:mm a' }}</span><small>Edit appointment →</small>
     </button>
   </div>
-  <form [formGroup]="form" (ngSubmit)="submit()" class="appointment-form">
-    <h5>{{ selected ? 'Edit appointment' : 'New appointment' }}</h5>
+  <button type="button" class="btn btn-outline-primary" [disabled]="busy" (click)="addAppointment()">Add appointment</button>
+  <p *ngIf="error" role="alert" class="text-danger">{{ error }}</p><p *ngIf="notice" role="status">{{ notice }}</p>
+  <form [hidden]="!editorOpen" [formGroup]="form" (ngSubmit)="submit()" class="appointment-form">
+    <p>Appointment times use {{ timezone || 'the workspace timezone (setup required)' }}.</p><label>Repeated daylight-saving hour<select class="form-control" [ngModel]="occurrence" (ngModelChange)="occurrence=$event" [ngModelOptions]="{standalone:true}"><option value="reject">Ask me if a time occurs twice</option><option value="earlier">Earlier occurrence</option><option value="later">Later occurrence</option></select></label><h5>{{ selected ? 'Edit appointment' : 'New appointment' }}</h5>
     <fieldset [disabled]="busy">
       <label *ngIf="!jobSlug && jobs.length">Attach to<select class="form-control" formControlName="jobSlug"><option value="">Customer (general)</option><option *ngFor="let job of jobs" [value]="job.jobSlug">{{ job.name }}</option></select></label>
       <label
@@ -82,9 +84,7 @@
       <button
         type="button"
         class="btn btn-outline-primary"
-        mwlCalendarToday
-        [(viewDate)]="viewDate"
-        (viewDateChange)="closeOpenMonthViewDay()"
+        (click)="today()"
       >
         Today
       </button>
@@ -169,3 +169,4 @@
     </div>
   </div>
 </section>
+

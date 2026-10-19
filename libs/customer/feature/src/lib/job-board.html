@@ -2,12 +2,14 @@
   <header class="board-heading">
     <div>
       <span class="eyebrow">PROJECT WORK</span>
-      <h2>{{complete ? 'Completed jobs' : 'Job Board'}}</h2>
+      <h2>{{archived ? 'Archived jobs' : complete ? 'Completed jobs' : 'Job Board'}}</h2>
       <p>Scan priorities. Find a job. Keep work moving.</p>
     </div>
     <a class="btn btn-outline-primary" routerLink="/job/new">+ New job</a>
   </header>
+  <nav class="quick-filters" aria-label="Job views"><a routerLink="/jobs">Open</a><a routerLink="/completed">Completed</a><a routerLink="/jobs" [queryParams]="{archived:true}">Archived</a></nav>
   <div class="filters">
+    <label>Project label<input class="form-control" [(ngModel)]="label" (ngModelChange)="filterChanged(true)" maxlength="200" /></label>
     <label class="search"
       >Search jobs or customers<input
         class="form-control"
@@ -22,7 +24,7 @@
       >Owner<select
         class="form-control"
         [(ngModel)]="assignee"
-        (ngModelChange)="filterChanged()"
+        (ngModelChange)="scope='';filterChanged()"
       >
         <option value="">Everyone</option>
         <option *ngFor="let member of team" [value]="member.id">
@@ -43,7 +45,7 @@
         <option value="low">Low</option>
       </select></label
     >
-    <label *ngIf="!complete"
+    <label *ngIf="!complete && !archived"
       >Status<select
         class="form-control"
         [(ngModel)]="lane"
@@ -56,6 +58,8 @@
     >
   </div>
   <div class="filter-bar">
+    <span *ngIf="scope">{{ scope === 'mine' ? 'My assignments' : scope === 'unassigned' ? 'Unassigned work' : 'Team work' }}</span>
+    <span *ngIf="dueSoon">Due in two weeks or overdue</span>
     <div class="quick-filters">
       <button
         class="filter-chip"
@@ -65,7 +69,7 @@
       >
         My jobs</button
       ><button
-        *ngIf="!complete"
+        *ngIf="!complete && !archived"
         class="filter-chip"
         [class.selected]="overdue"
         [attr.aria-pressed]="overdue"
@@ -73,7 +77,7 @@
       >
         Overdue</button
       ><button
-        *ngIf="!complete"
+        *ngIf="!complete && !archived"
         class="filter-chip"
         [class.selected]="attention"
         [attr.aria-pressed]="attention"
@@ -86,6 +90,7 @@
       >{{loading ? 'Searching…' : total + (total===1?' job':' jobs')}}</span
     >
   </div>
+  <details><summary>My saved views</summary><div class="quick-filters"><button *ngFor="let view of views" class="filter-chip" type="button" (click)="openView(view)">{{ view.name }}</button></div><form (ngSubmit)="saveView()" class="filters"><label>Save current filters as<input class="form-control" name="viewName" [(ngModel)]="viewName" maxlength="80" required /></label><button class="btn btn-outline-primary" type="submit">Save private view</button></form></details>
   <p class="text-danger" role="alert" *ngIf="error">
     {{error}}
     <button class="btn btn-outline-primary" (click)="load()">Retry</button>
@@ -98,12 +103,13 @@
     <article *ngFor="let job of jobs;trackBy:trackJob" class="job-record">
       <div class="job-row">
         <div class="job-title">
-          <a [routerLink]="['/job',job.jobSlug]">{{job.name}}</a
-          ><a
+          <a [routerLink]="['/job',job.jobSlug]" [queryParams]="{returnTo: returnUrl}">{{job.name}}</a
+          ><a *ngIf="job.customerSlug"
             class="customer-link"
             [routerLink]="['/customer',job.customerSlug]"
             >{{job.customerName}}</a
           >
+          <span *ngIf="!job.customerSlug" class="customer-link">Internal project</span>
         </div>
         <span class="owner">{{owner(job.assigneeId)}}</span>
         <span class="priority" [attr.data-priority]="job.priority"
@@ -121,7 +127,7 @@
           >{{job.taskList?.length ? done(job)+' / '+job.taskList.length :
           '—'}}</span
         >
-        <select
+        <select *ngIf="!archived"
           class="form-control status-select"
           [attr.aria-label]="'Status for '+job.name+' at '+job.customerName"
           #status
@@ -134,6 +140,11 @@
           <option value="complete">Complete</option>
           <option value="archived">Archived</option>
         </select>
+        <span *ngIf="archived">
+          <a *ngIf="job.customerArchived" [routerLink]="['/editor',job.customerSlug]">Restore customer first</a>
+          <button *ngIf="job.isArchived && !job.customerArchived" type="button" class="btn btn-outline-primary" [disabled]="!!saving" (click)="restore(job)">Restore to Planned</button>
+          <small *ngIf="job.customerArchived">Hidden by customer archive · {{ job.lane | titlecase }}</small>
+        </span>
         <button
           class="details-toggle"
           [attr.aria-expanded]="expanded===job.jobSlug"
@@ -161,14 +172,14 @@
             </button>
           </li>
         </ul>
-        <a [routerLink]="['/job',job.jobSlug]"
+        <a [routerLink]="['/job',job.jobSlug]" [queryParams]="{returnTo: returnUrl}"
           >Open job workspace →</a
         >
       </div>
     </article>
     <div *ngIf="!jobs.length&&!loading&&!error" class="empty-state">
-      <h4>No matching jobs</h4>
-      <p>Try a different search or clear the filters.</p>
+      <h4>{{ filtered ? 'No matching jobs' : archived ? 'No archived jobs' : complete ? 'No completed jobs yet' : 'No open jobs yet' }}</h4>
+      <p>{{ filtered ? 'Try a different search or clear the filters.' : 'Create a job or internal project to start organizing work.' }}</p>
       <button class="btn btn-outline-primary" (click)="clear()">
         Show all jobs
       </button>

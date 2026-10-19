@@ -45,7 +45,7 @@
   },
   {
     "path": "apps/api/src/app/app.module.ts",
-    "sha256": "d329690e12a72a184a4a0e0863a22f11be372d0000b74710b1c341592ef9f4f8"
+    "sha256": "93add1c2b244e3dc584ae9d87b18df26ef5578d1d19abaa30c93504e0a80bcaa"
   },
   {
     "path": "apps/api/src/demo-seed.ts",
@@ -93,11 +93,11 @@
   },
   {
     "path": "apps/mgmtapp/src/app/layout/layout-routing.module.ts",
-    "sha256": "058c8760fd2b5e4ae958f1e23475f33ec94917b03287a933dd9cbb0205ae982d"
+    "sha256": "703c7eef08cbc2f05313791d1c5386dd764f66b08565e6810885976c65c875ac"
   },
   {
     "path": "apps/mgmtapp/src/app/layout/layout.component.html",
-    "sha256": "5bb78ccfdd87b70be620663d2e4f8119644099371e71ee6e458bc6403ef221a3"
+    "sha256": "88ed45094eb48de34c185a417a0b633ae437cdca0c0ff1e4448a731b30b43798"
   },
   {
     "path": "apps/mgmtapp/src/app/layout/layout.component.scss",
@@ -105,7 +105,7 @@
   },
   {
     "path": "apps/mgmtapp/src/app/layout/layout.component.ts",
-    "sha256": "f4b4d2eba042ba7e119202d6983bec853ff6679ec320d57aeec66329e9f5d2a0"
+    "sha256": "6d3c56bbf998deab6cc2204cc8973e5ac53322a872cfe885b9c0a49b2a73fa46"
   },
   {
     "path": "apps/mgmtapp/src/app/layout/layout.module.ts",
@@ -113,7 +113,7 @@
   },
   {
     "path": "apps/mgmtapp/src/app/layout/navbar/navbar.component.html",
-    "sha256": "ccaf229d86874182350ab4d21c66c8b3c9412ec203d1f660f3ea0954c9fce86a"
+    "sha256": "e025fa7965bafc2c26af48897cefc61dee9e6b3b4444d7d21aeb66114102f488"
   },
   {
     "path": "apps/mgmtapp/src/app/layout/navbar/navbar.component.scss",
@@ -153,7 +153,7 @@
   },
   {
     "path": "apps/mgmtapp/src/styles.scss",
-    "sha256": "7f758de7b7cdc9c1aabd012c8274c9bdce38c85001d80af0850eff6a1be1cc53"
+    "sha256": "2c3bab95b6287d163566bd1f8372e4b13e3f8188f7b1cc8649d873f68095c327"
   },
   {
     "path": "apps/mgmtapp/tsconfig.app.json",
@@ -181,7 +181,11 @@
   },
   {
     "path": "docs/PUBLIC-README.md",
-    "sha256": "48f25d2e7351f1b00c589505e004724e3db611f56eca7e6cb3bdc5bec796c88a"
+    "sha256": "31ea8159c4d820708fdd8f980c4ca60f62e96c091e8c4d826141d3aea3cfdacf"
+  },
+  {
+    "path": "docs/WORKSPACE-WORKFLOWS.md",
+    "sha256": "8ea35126be8473b2d681f4064a7d0078bc23d548a5b27fdec07b6f15e10d2bf6"
   },
   {
     "path": "libs/customer/api-interfaces/src/index.ts",
@@ -189,7 +193,7 @@
   },
   {
     "path": "libs/customer/api-interfaces/src/lib/customer-api-interfaces.ts",
-    "sha256": "2c24b4505e2a36ade0446bfcf3196dbb24fd926180a4645f461679d148c3b54b"
+    "sha256": "755b177617f83210ce6f497166c72e3f6c1ead2f470491154d8580cc9ec19318"
   },
   {
     "path": "libs/customer/api/handlers/src/index.ts",
@@ -197,11 +201,27 @@
   },
   {
     "path": "libs/customer/api/handlers/src/lib/customer-api-handlers.controller.ts",
-    "sha256": "5710818c4efe27a97322e7978cf5bb7318cda840fa8f76d458e78b42080c8f17"
+    "sha256": "f639b9e9d9afdfa7abfd8e0db16509fc29a9876066fbf1249219d271d0223a20"
   },
   {
     "path": "libs/customer/api/handlers/src/lib/customer-api-handlers.module.ts",
-    "sha256": "47d3d889c5e62f0ca8a14e62d8e0bbe20841ab7e94521d2f6211dba2483049bd"
+    "sha256": "0a0b465b7367a57efb0a5eff89f4edf6eca75e14a69817c0c13a5bd2ee4ce462"
+  },
+  {
+    "path": "libs/customer/api/handlers/src/lib/job-lifecycle.ts",
+    "sha256": "25567d2bceeb82204424e89c89c3a54fc3689daf1c421b69595223cc73def932"
+  },
+  {
+    "path": "libs/customer/api/handlers/src/lib/work-tools.controller.ts",
+    "sha256": "29d5306fa68bacff4b9f2fdd88cdfdc1c46dc20795edc189571210ddb1b27440"
+  },
+  {
+    "path": "libs/customer/api/handlers/src/lib/workspace.controller.ts",
+    "sha256": "8d344d308264610644e14a52f84d69b41ecc35f036769c52c696f1bf6c0b82b7"
+  },
+  {
+    "path": "libs/customer/api/handlers/src/lib/workspace.service.ts",
+    "sha256": "12d2d41eeb829a4868e8e71764bdd9b09e0aa35cee3a3bcbaaed059bdc266efe"
   },
   {
     "path": "libs/customer/api/shared/src/index.ts",
@@ -245,7 +265,7 @@
   },
   {
     "path": "libs/customer/api/shared/src/lib/job.entity.ts",
-    "sha256": "f595990e7d1b781c6d92f1c4157b35401362daf4c54efe216b9d321b98aba5b3"
+    "sha256": "7aeca2fd440c4917619248fb95877bd000e66812994d59688cbbe7d974d5b590"
   },
   {
     "path": "libs/customer/api/shared/src/lib/job.service.ts",
@@ -261,11 +281,11 @@
   },
   {
     "path": "libs/customer/feature/src/index.ts",
-    "sha256": "ce830e42a237425963cc20f205a5c78a535385474a13e7023d22f7495136aced"
+    "sha256": "b8e6fe1e6e55256686e4ae726e3e32aa31faaf10a00cfd5c65bd25a593b7fdc4"
   },
   {
     "path": "libs/customer/feature/src/lib/calendar/calendar.component.html",
-    "sha256": "a552b46ca035bd02019e934aa65b74a084cb95da3cf305d9341e3663ee6a3ab0"
+    "sha256": "9e226ed8a279f97d4cc3288ff89a4b2c4d507cf8fa07bff05fa6eb8e53a3b3fe"
   },
   {
     "path": "libs/customer/feature/src/lib/calendar/calendar.component.scss",
@@ -273,7 +293,7 @@
   },
   {
     "path": "libs/customer/feature/src/lib/calendar/calendar.component.ts",
-    "sha256": "93b234cdd9d5a5a4f6a841e49cc6a6df5c91834ee82b1ee6af5e620c7b4f3331"
+    "sha256": "de5d5b49ea0eb0a6fa9c937d80666cbaeb5a86e8370c1eaf7859fd91474bf0e8"
   },
   {
     "path": "libs/customer/feature/src/lib/calendar/calendar.module.ts",
@@ -313,7 +333,7 @@
   },
   {
     "path": "libs/customer/feature/src/lib/components/customer-list/customer-list.component.html",
-    "sha256": "8cbade39acfc0eed84d98abb00c9f1893676aef2d2b568fcb2dbdd3dd2b4a2ef"
+    "sha256": "5d9987a71adb252181707391942073f63f1404c0c1372801fee3fecad82e29aa"
   },
   {
     "path": "libs/customer/feature/src/lib/components/customer-list/customer-list.component.scss",
@@ -321,7 +341,7 @@
   },
   {
     "path": "libs/customer/feature/src/lib/components/customer-list/customer-list.component.ts",
-    "sha256": "a1e4fb04753c43e2065e809a00f45c39c53e5084235cffcec8f62aeb51973826"
+    "sha256": "020788180d4dd209ad848f71d2a68f9c54cfbf9b1131fcc166442f764d1e71fa"
   },
   {
     "path": "libs/customer/feature/src/lib/components/customer-list/customer-list.module.ts",
@@ -329,7 +349,7 @@
   },
   {
     "path": "libs/customer/feature/src/lib/components/home/home.component.html",
-    "sha256": "820df26b3c9aa11f2100d45aff371699db87016d1e18c9bb28c47da823759579"
+    "sha256": "60a664499e072ed7e63a85db08b7c8a64d1258fa5423a500919f024b481eb564"
   },
   {
     "path": "libs/customer/feature/src/lib/components/home/home.component.scss",
@@ -337,11 +357,11 @@
   },
   {
     "path": "libs/customer/feature/src/lib/components/home/home.component.ts",
-    "sha256": "6ae49fa58c184c44dcc68e289a93ad8cfe2e854fbac99a68e1eae3b326e7648d"
+    "sha256": "6a63a80f21193b122c166527d0c5fde04d103eef857d4f4b96bbee5a1fa479a8"
   },
   {
     "path": "libs/customer/feature/src/lib/components/home/home.module.ts",
-    "sha256": "bfa7a7ac26d616e68d2d34eec83ed1043bbc0da561dba4b0061d8f1f6a9ef6ee"
+    "sha256": "4b08055f3092525e114a88ae68e22a281d3c9c6712e6d756c61dd821cd19190d"
   },
   {
     "path": "libs/customer/feature/src/lib/components/list-customers/list-customers.component.html",
@@ -358,6 +378,10 @@
   {
     "path": "libs/customer/feature/src/lib/components/list-customers/list-customers.module.ts",
     "sha256": "583535361121ea8dc0717840f52c9edd5226d39ee5d2831b2ee00d5d38658f85"
+  },
+  {
+    "path": "libs/customer/feature/src/lib/editor-state.ts",
+    "sha256": "e62cb8451435448074ae39641c691643593c1d5783a8f410540deeb6db4033f4"
   },
   {
     "path": "libs/customer/feature/src/lib/editor/editor.component.html",
@@ -377,7 +401,7 @@
   },
   {
     "path": "libs/customer/feature/src/lib/file-util/file-util.component.html",
-    "sha256": "baa88b474eae4f0852ef5875d1010cae709915a9f1d70e8bb7b9bd02e3cf5d6d"
+    "sha256": "499e00dd29a59817e7fa8dcfeb2b9af5e1309935e44b20f7ec60fafc0b7413af"
   },
   {
     "path": "libs/customer/feature/src/lib/file-util/file-util.component.scss",
@@ -385,7 +409,7 @@
   },
   {
     "path": "libs/customer/feature/src/lib/file-util/file-util.component.ts",
-    "sha256": "6587467326edd8bdc74b374b4432f1b5fb4c68bf928124a49bf9be93e0895682"
+    "sha256": "debe3905e4964d0711a87001d193395c9e1da99795e494e80027b99c3b97cf01"
   },
   {
     "path": "libs/customer/feature/src/lib/file-util/file-util.module.ts",
@@ -393,11 +417,11 @@
   },
   {
     "path": "libs/customer/feature/src/lib/job-board.html",
-    "sha256": "61f52d707211fde8bf549e1e5b7cc41a0c0a0b1c0f112790608a88ad7f987ef2"
+    "sha256": "301abd1d73f94a9acecc7acc9df36700e9b3733603fad912843e30525ddb6757"
   },
   {
     "path": "libs/customer/feature/src/lib/job-board.module.ts",
-    "sha256": "ea4945bf1031b804db381d649c2f30634d81b8a25e1bb4294f5f695068656fa0"
+    "sha256": "08f5b0ffbd93d85d129da6a796d10b3dbe6b20f22b2aae90511eb3ad408d6b98"
   },
   {
     "path": "libs/customer/feature/src/lib/job-board.scss",
@@ -405,23 +429,23 @@
   },
   {
     "path": "libs/customer/feature/src/lib/job-view/job-view.component.html",
-    "sha256": "af87053dab209d985a300be4f137702ef06e763148d76b7ce936a0a8987ed5f8"
+    "sha256": "1c6fb283488537a1dc852aa165fcb26734fa3c65133cec2c457cf413f18081c6"
   },
   {
     "path": "libs/customer/feature/src/lib/job-view/job-view.component.scss",
-    "sha256": "9313fd4d0d85fb1085abe8456719ecab6ab510b69e25b99e197fd58a39ede194"
+    "sha256": "ae676f3823e83bd97e04e6d8a4206fd428e784b24e8c24a6ace0edfa1e2c44c6"
   },
   {
     "path": "libs/customer/feature/src/lib/job-view/job-view.component.ts",
-    "sha256": "45d89ffdc12accf13a32d8e1ec6d3b2db09c16643378e5e8dbeee25c038fd47b"
+    "sha256": "9c762a459e5fc1e3e1a01b3b0fc882184b3589c8b52081aaa1277bebf0469f58"
   },
   {
     "path": "libs/customer/feature/src/lib/job-view/job-view.module.ts",
-    "sha256": "e10d7c9fa5a8174160701bbdd7c602c8520c4bb24685d25a5f99b8e2b8f0c53b"
+    "sha256": "62f8ed1a3fb37f9d8efa6ad816e1aad1d28672c6d89a2f07917c30ceb3c1dfec"
   },
   {
     "path": "libs/customer/feature/src/lib/view-comments/view-comments.component.html",
-    "sha256": "0b811e316c3d6b2d38adeecb3e5199a1a1924be62076328dead39f1cdf68ddf7"
+    "sha256": "f5f4e482b3d477b5435698d7adee882d6e126307c5953f10ac6e734d80af1f80"
   },
   {
     "path": "libs/customer/feature/src/lib/view-comments/view-comments.component.scss",
@@ -429,7 +453,7 @@
   },
   {
     "path": "libs/customer/feature/src/lib/view-comments/view-comments.component.ts",
-    "sha256": "6d20519213cd253f823ba62d01e5c6c7478710582514edebf64e542e8260913e"
+    "sha256": "a15b56ea8eb7f082e94fe1921cbb0dd9bf12fbaec98b76247f3e9b6a4a474472"
   },
   {
     "path": "libs/customer/feature/src/lib/view-comments/view-comments.module.ts",
@@ -437,19 +461,35 @@
   },
   {
     "path": "libs/customer/feature/src/lib/view-customer/view-customer.component.html",
-    "sha256": "023952db728157118e11c68ce53826a026bad891f1c615f8867e306c7a55391b"
+    "sha256": "5261bd71bf80c4d7210d2256891a02b0d0d8cc66a466fa7869d1627919c4e826"
   },
   {
     "path": "libs/customer/feature/src/lib/view-customer/view-customer.component.scss",
-    "sha256": "c459806e26349ad6a3437e7c823bc86f870ddb64b1d1a944eeaac4c8c47dcae8"
+    "sha256": "06ff4841c070242574369ff4d9662049dbc7e39ed976bc17287890707d2fae4a"
   },
   {
     "path": "libs/customer/feature/src/lib/view-customer/view-customer.component.ts",
-    "sha256": "ee435e44a7f79a287d4c3269bbd5e58a959375d6104c788359ee410809b0e5b7"
+    "sha256": "b8d6697969c163a0dd9556ee0357b06efaa8fe30b079ba0946a9c282a89cd0c7"
   },
   {
     "path": "libs/customer/feature/src/lib/view-customer/view-customer.module.ts",
-    "sha256": "d51396441d887bc6ae3057980c4a797c5b0c0e459ea8c61f269fe7661a8472d6"
+    "sha256": "ac586e70149a9b8410116969b98ab734f550d536580e462fd9a754f87ffe0e79"
+  },
+  {
+    "path": "libs/customer/feature/src/lib/workspace/workspace.component.html",
+    "sha256": "ba1dc39e030bf1382825144ccad8bbe0037ba72b6a8cc0e909a7d46088663fad"
+  },
+  {
+    "path": "libs/customer/feature/src/lib/workspace/workspace.component.scss",
+    "sha256": "3dcb32e42355090fcb94979640e74d5edc9004f1a6dda8917bdc7f32b6069f96"
+  },
+  {
+    "path": "libs/customer/feature/src/lib/workspace/workspace.component.ts",
+    "sha256": "6cdf08a90c372483c682ea31a5ce53ac0df09b0e316d8d76075166039284b1bf"
+  },
+  {
+    "path": "libs/customer/feature/src/lib/workspace/workspace.module.ts",
+    "sha256": "d44819dbc3717ded47081f725632201f1a9f984b8315420e40d87a7781cec33a"
   },
   {
     "path": "libs/shared/api/config/src/lib/migrations/job-calendar.ts",
@@ -462,6 +502,10 @@
   {
     "path": "libs/shared/api/config/src/lib/migrations/planning-fields.ts",
     "sha256": "b685188abcda7c9cf5fdec7bf64d4e6acc1ab3f9ef3134ebe46aa79c9ab55092"
+  },
+  {
+    "path": "libs/shared/api/config/src/lib/migrations/workspace-workflows.ts",
+    "sha256": "47cbbf99599da9199caa1c28a42998954238676af58ee1eaf1bf7f7ee83faea0"
   },
   {
     "path": "libs/shared/api/config/src/lib/runtime.ts",
@@ -521,11 +565,15 @@
   },
   {
     "path": "libs/shared/common/src/lib/legacy-tabs.module.ts",
-    "sha256": "fefe9500ee90abf23a0f8fd045dd2fd2d92cdd0f82b1edf28ffd2f5c0e55063f"
+    "sha256": "c1ba42e57aa22c7a51587a91df3df2cae9deb3f7c1bc1efbb2f62befcfe817c4"
   },
   {
     "path": "libs/shared/common/src/lib/shared-common.module.ts",
     "sha256": "07649d0be4d74850075421f178c36f591f8ad19a8e9259c4bd6b31bbfcac44da"
+  },
+  {
+    "path": "libs/shared/common/src/lib/workspace-time.ts",
+    "sha256": "f138a120ed6f8dc8385639993bcca15180b50e0a2c62387e8b9426fb853954fc"
   },
   {
     "path": "libs/shared/configuration/src/index.ts",
@@ -841,7 +889,7 @@
   },
   {
     "path": "libs/user/api/shared/src/lib/jwt-strategy/jwt-auth.guard.ts",
-    "sha256": "c0784ed4121716a479ae5bef6434526731ccbf4666b408ea831130eca4276702"
+    "sha256": "b394dd0a9da1b4a18193937f052a2a879ea322dfcc4287ae9eee5b2a00391e94"
   },
   {
     "path": "libs/user/api/shared/src/lib/skip-auth.ts",
@@ -1005,7 +1053,7 @@
   },
   {
     "path": "test/frontend-behavior.test.cjs",
-    "sha256": "525a4722bdeb67f046c24b0b87a29073a085a3ba751298944b927f80dea150e9"
+    "sha256": "1dd3ba13211156c7e4e7a3edf6fe5aa288a1e9c274b0ceb70450f1661523c03c"
   },
   {
     "path": "test/migrations.test.cjs",
@@ -1029,7 +1077,15 @@
   },
   {
     "path": "test/workflows.test.cjs",
-    "sha256": "6fe52e54f808228bf362be99a9f1a5d39b6f5d5fab93245ee995d61d86184074"
+    "sha256": "0a8844eb3fc213e034d07aab7426c0ea6d2bc19f8719675337636628cf0f6160"
+  },
+  {
+    "path": "test/workspace-rules.test.cjs",
+    "sha256": "5cb6e2843812e52a250cc6ceb143f70b5e7fbedc026fcbccc5bdc7c6a286ea72"
+  },
+  {
+    "path": "tools/audit-workflows.cjs",
+    "sha256": "46cdf78dcff692da04460dc65a03e17805fbcec421643d44c15f2514dea3ffb8"
   },
   {
     "path": "tools/build.cjs",
@@ -1053,7 +1109,7 @@
   },
   {
     "path": "tools/prepare-public.cjs",
-    "sha256": "4805c192ad63716f9de0071ca6203551b83ebd6eaaec93e9392434db9f82e18b"
+    "sha256": "d936629681752ca141f0113fec408d55ebca577e943c3e32e1f7b3b65cf0048e"
   },
   {
     "path": "tools/sandbox.cjs",
@@ -1069,11 +1125,11 @@
   },
   {
     "path": "tsconfig.base.json",
-    "sha256": "69b5a3e756ce9c22ad500cc79e8192490eb387c4ac6e346c996e420d01d25285"
+    "sha256": "de879201ed8827e4addb4aec9f12424c5312cf90dbf3ac1870e411bcb5e041e5"
   },
   {
     "path": "README.md",
-    "sha256": "48f25d2e7351f1b00c589505e004724e3db611f56eca7e6cb3bdc5bec796c88a"
+    "sha256": "31ea8159c4d820708fdd8f980c4ca60f62e96c091e8c4d826141d3aea3cfdacf"
   },
   {
     "path": ".gitignore",
