@@ -429,15 +429,15 @@
   },
   {
     "path": "libs/customer/feature/src/lib/job-view/job-view.component.html",
-    "sha256": "1c6fb283488537a1dc852aa165fcb26734fa3c65133cec2c457cf413f18081c6"
+    "sha256": "eb36b10895f6f2d32367fdbb6ea1021d69cb17ad78f171c942daab7302c20d52"
   },
   {
     "path": "libs/customer/feature/src/lib/job-view/job-view.component.scss",
-    "sha256": "ae676f3823e83bd97e04e6d8a4206fd428e784b24e8c24a6ace0edfa1e2c44c6"
+    "sha256": "a02be4587cd4d081b6e68092361448ed5a83e6a81a1fc8c9556d8ffd6c645e36"
   },
   {
     "path": "libs/customer/feature/src/lib/job-view/job-view.component.ts",
-    "sha256": "9c762a459e5fc1e3e1a01b3b0fc882184b3589c8b52081aaa1277bebf0469f58"
+    "sha256": "417f580d5eac0b4ec8ccf521a23098c339a0432fb876e79c3046613c831d58fd"
   },
   {
     "path": "libs/customer/feature/src/lib/job-view/job-view.module.ts",
@@ -461,7 +461,7 @@
   },
   {
     "path": "libs/customer/feature/src/lib/view-customer/view-customer.component.html",
-    "sha256": "5261bd71bf80c4d7210d2256891a02b0d0d8cc66a466fa7869d1627919c4e826"
+    "sha256": "561ae374f1af6572600edeea47b372bf6e6b0ca3bd70e263b0d9a732d65890fd"
   },
   {
     "path": "libs/customer/feature/src/lib/view-customer/view-customer.component.scss",
